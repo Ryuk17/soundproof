@@ -3,3 +3,4 @@ some neural network architecture in deep learning
 
 # What's in it?
 1. AlexNet
+2. SimpleRNN
