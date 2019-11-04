@@ -6,4 +6,4 @@ Neural networks with Tensorflow
 2. MultiInput
 
 # Dependences
-1. Tensorflow
+1. Pytorch
