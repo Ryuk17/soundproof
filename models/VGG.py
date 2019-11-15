@@ -25,16 +25,16 @@ class VGGnet(nn.Module):
 
     def _constructNet(self, arch, in_channels):
         net = []
-        for in_size in arch:
-            if in_size == 'Pooling':
+        for out_channels in arch:
+            if out_channels == 'Pooling':
                 net += [nn.MaxPool2d(kernel_size=2, stride=2)]
             else:
                 net += [
-                    nn.Conv2d(in_channels, in_size, kernel_size=3, padding=1),
-                    nn.BatchNorm2d(in_size),
+                    nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                    nn.BatchNorm2d(out_channels),
                     nn.ReLU(inplace=True)
                 ]
-                in_channels = in_size
+                in_channels = out_channels
         net += [nn.AvgPool2d(kernel_size=1, stride=1)]
         return nn.Sequential(*net)
 
