@@ -41,5 +41,6 @@ def main():
     x = torch.randn(1,3,224,224)
     print(model(x))
 
+
 if __name__ == '__main__':
     main()
