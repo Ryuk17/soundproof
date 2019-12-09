@@ -1,5 +1,5 @@
 # NetworkCollections
-Neural networks with Tensorflow
+Neural networks with Pytorch
 
 # What's in it?
 1. AlexNet
