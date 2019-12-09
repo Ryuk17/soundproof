@@ -13,6 +13,7 @@ Neural networks with Pytorch
 9. MobileNetV1
 10. MobileNetV2
 11. MobileNetV3
+12. SENet
 
 # Dependences
 1. Pytorch
