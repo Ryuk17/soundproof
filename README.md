@@ -9,6 +9,10 @@ Neural networks with Tensorflow
 5. VGG
 6. VAE
 7. N-Gram
+8. TransferLearning
+9. MobileNetV1
+10. MobileNetV2
+11. MobileNetV3
 
 # Dependences
 1. Pytorch
