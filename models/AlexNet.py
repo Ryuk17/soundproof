@@ -49,7 +49,7 @@ class Alexnet(nn.Module):
         return x
 
 def main():
-    x = torch.randn(1, 3, 32, 32)
+    x = torch.randn(1, 3, 224, 224)
     net = Alexnet(10)
     print(net(x))
 

@@ -12,9 +12,9 @@ import torch
 import torch.nn as nn
 
 
-class VGGnet(nn.Module):
+class VGGNet(nn.Module):
     def __init__(self, n_classes, n_layers, in_channels=3):
-        super(VGGnet, self).__init__()
+        super(VGGNet, self).__init__()
 
         self.architecture = {
             16: [64, 64, 'Pooling', 128, 128, 'Pooling', 256, 256, 256, 'Pooling', 512, 512, 512, 'Pooling', 512, 512, 512, 'Pooling'],
@@ -47,7 +47,7 @@ class VGGnet(nn.Module):
 
 def main():
     x = torch.randn(1, 3, 32, 32)
-    net = VGGnet(10, 19)
+    net = VGGNet(10, 19)
     print(net(x))
 
 
