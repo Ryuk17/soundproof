@@ -26,13 +26,8 @@ def conv_bn_act(in_, out_, kernel_size,
 
 
 class SamePadConv2d(nn.Conv2d):
-    """
-    Conv with TF padding='same'
-    https://github.com/pytorch/pytorch/issues/3867#issuecomment-349279036
-    """
-
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, dilation=1, groups=1, bias=True, padding_mode="zeros"):
-        super().__init__(in_channels, out_channels, kernel_size, stride, 0, dilation, groups, bias, padding_mode)
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, dilation=1, groups=1, bias=True):
+        super(SamePadConv2d, self).__init__(in_channels, out_channels, kernel_size, stride, 0, dilation, groups, bias)
 
     def get_pad_odd(self, in_, weight, stride, dilation):
         effective_filter_size_rows = (weight - 1) * dilation + 1
@@ -66,7 +61,7 @@ class Flatten(nn.Module):
 
 class SEModule(nn.Module):
     def __init__(self, in_, squeeze_ch):
-        super().__init__()
+        super(SEModule, self).__init__()
         self.se = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Conv2d(in_, squeeze_ch, kernel_size=1, stride=1, padding=0, bias=True),
