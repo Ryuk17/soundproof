@@ -18,3 +18,4 @@ Neural networks with Pytorch
 
 # Dependences
 1. Pytorch
+2. Numpy
