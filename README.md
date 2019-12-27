@@ -24,6 +24,8 @@ Neural networks with Pytorch
 ## OTHERS
 1. [TransferLearning](https://github.com/DandelionLau/NetworkCollections/blob/master/OTHERS/TransferLearning.py)
 2. [N-Gram](https://github.com/DandelionLau/NetworkCollections/blob/master/OTHERS/N-Gram.py)
+
+
 # Dependences
 1. Pytorch
 2. Numpy
