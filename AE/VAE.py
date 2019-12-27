@@ -1,7 +1,7 @@
 """
 @FileName: VAE.py
 @Description: Implement VAE
-@Author : Lj
+@Author : Ryuk
 @CreateDate: 2019/11/15 16:28
 @LastEditTime: 2019/11/15 16:28
 @LastEditors: Please set LastEditors

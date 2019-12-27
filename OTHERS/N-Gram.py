@@ -1,7 +1,7 @@
 """
 @FileName: N-Gram.py
 @Description: Implement N-Gram
-@Author : Lj
+@Author : Ryuk
 @CreateDate: 2019/11/15 16:03
 @LastEditTime: 2019/11/15 16:03
 @LastEditors: Please set LastEditors

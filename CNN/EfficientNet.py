@@ -2,7 +2,7 @@
 """
 @FileName: EfficientNet.py
 @Description: Implement EfficientNet
-@Author: Lj
+@Author: Ryuk
 @CreateDate: 2019/12/12 14:03
 @LastEditTime: 2019/12/12 14:03
 @LastEditors: Please set LastEditors

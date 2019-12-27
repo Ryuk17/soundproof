@@ -1,7 +1,7 @@
 """
 @FileName: ResNet.py
 @Description: Implement ResNet
-@Author : Lj
+@Author : Ryuk
 @CreateDate: 2019/11/14 16:10
 @LastEditTime: 2019/11/14 16:10
 @LastEditors: Please set LastEditors

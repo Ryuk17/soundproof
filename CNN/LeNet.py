@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @FileName: LeNet.py
 # @Description: Implementation of LeNet
-# @Author  : Lj
+# @Author  : Ryuk
 # @CreateDate: 2019/11/4 17:25
 # @LastEditTime: 2019/11/4 17:25
 # @LastEditors: Please set LastEditors

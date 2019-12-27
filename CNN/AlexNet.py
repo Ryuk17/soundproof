@@ -1,7 +1,7 @@
 """
 @FileName: AlexNet.py
 @Description: Implement AlexNet
-@Author  : Lj
+@Author  : Ryuk
 @CreateDate: 2019/11/13 13:47
 @LastEditTime: 2019/11/13 13:47
 @LastEditors: Please set LastEditors

@@ -2,7 +2,7 @@
 """
 @FileName: SENet.py
 @Description: Implement SENet
-@Author: Lj
+@Author: Ryuk
 @CreateDate: 2019/12/9 15:12
 @LastEditTime: 2019/12/9 15:12
 @LastEditors: Please set LastEditors

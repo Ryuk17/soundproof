@@ -1,7 +1,7 @@
 """
 @FileName: VGG.py
 @Description: Implementation of VGG
-@Author : Lj
+@Author : Ryuk
 @CreateDate: 2019/11/13 15:44
 @LastEditTime: 2019/11/13 15:44
 @LastEditors: Please set LastEditors

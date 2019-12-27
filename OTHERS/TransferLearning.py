@@ -2,7 +2,7 @@
 """
 @FileName: TransferLearning.py
 @Description: Implement TransferLearning
-@Author: Lj
+@Author: Ryuk
 @CreateDate: 2019/11/28 14:50
 @LastEditTime: 2019/11/28 14:50
 @LastEditors: Please set LastEditors

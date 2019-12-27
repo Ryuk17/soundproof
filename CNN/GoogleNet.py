@@ -1,7 +1,7 @@
 """
 @FileName: GoogleNet.py
 @Description: Implement GoogleNet
-@Author : Lj
+@Author : Ryuk
 @CreateDate: 2019/11/14 16:11
 @LastEditTime: 2019/11/14 16:11
 @LastEditors: Please set LastEditors

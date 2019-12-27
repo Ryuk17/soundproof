@@ -2,7 +2,7 @@
 """
 @FileName: ShuffleNetV2.py
 @Description: Implement ShuffleNetV2
-@Author: Lj
+@Author: Ryuk
 @CreateDate: 2019/12/10 17:09
 @LastEditTime: 2019/12/10 17:09
 @LastEditors: Please set LastEditors

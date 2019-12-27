@@ -2,7 +2,7 @@
 """
 @FileName: MobileNetV1.py
 @Description: Implement MobileNetV1
-@Author: Lj
+@Author: Ryuk
 @CreateDate: 2019/12/9 13:35
 @LastEditTime: 2019/12/9 13:35
 @LastEditors: Please set LastEditors
