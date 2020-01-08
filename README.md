@@ -17,7 +17,10 @@ Neural networks with Pytorch
 ## RNN
 
 ## AE
-1. [VAE](https://github.com/DandelionLau/NetworkCollections/blob/master/AE/VAE.py)
+1. [AE]()
+2. [DAE]()
+3. [VAE](https://github.com/DandelionLau/NetworkCollections/blob/master/AE/VAE.py)
+4. []()
 
 ## GAN
 
