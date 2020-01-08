@@ -1,11 +1,9 @@
 """
-@FileName: VAE.py
-@Description: Implement VAE
-@Author : Ryuk
-@CreateDate: 2019/11/15 16:28
-@LastEditTime: 2019/11/15 16:28
-@LastEditors: Please set LastEditors
-@Version: v1.0
+@ Filename:       VariationalAutoencoder.py
+@ Author:         Danc1elion
+@ Create Date:    2020-01-08   
+@ Update Date:    2020-01-08 
+@ Description:    Implement VariationalAutoencoder
 """
 
 import torch
@@ -14,9 +12,9 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 
-class VariationalAutoEncoder(nn.Module):
+class VAE(nn.Module):
     def __init__(self, in_size, out_size):
-        super(VariationalAutoEncoder, self).__init__()
+        super(VAE, self).__init__()
 
         self.fc1 = nn.Linear(in_size, 400)
         self.fc21 = nn.Linear(400, 20)
@@ -63,7 +61,7 @@ def lossFunction(gen, org, mu, var):
 
 def main():
     x = torch.randn(10, 784)
-    net = VariationalAutoEncoder(784, 784)
+    net = VAE(784, 784)
     print(net(x))
 
 
