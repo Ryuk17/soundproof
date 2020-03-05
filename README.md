@@ -13,7 +13,7 @@ Neural networks with Pytorch
 8. [MobileNetV3](https://github.com/Ryuk17/NetworkCollections/blob/master/CNN/MobileNetV3.py)
 9. [SENet](https://github.com/Ryuk17/NetworkCollections/blob/master/CNN/SENet.py)
 10. [ShuffleNetV1](https://github.com/Ryuk17/NetworkCollections/blob/master/CNN/ShuffleNetV1.py)
-11. [ShuffleNetV1](https://github.com/Ryuk17/NetworkCollections/blob/master/CNN/ShuffleNetV2.py)
+11. [ShuffleNetV2](https://github.com/Ryuk17/NetworkCollections/blob/master/CNN/ShuffleNetV2.py)
 ## RNN
 
 ## AE
