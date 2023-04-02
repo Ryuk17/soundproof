@@ -48,6 +48,7 @@ float *sp_pcm_read_api(sp_pcm_handle_t *pcm_handle, int *length, const char *pcm
 	{
 		case SP_PCM_LINEAR:
 		{
+			*length = *length / sizeof(short);
 			return sp_pcm_read_linear(pcm_handle, raw_data, *length, fin);
 		}
 

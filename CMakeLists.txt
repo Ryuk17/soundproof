@@ -1,14 +1,20 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(Soundproof VERSION 1.0)
+project(soundproof VERSION 1.0)
 
-option(ENABLE_PCM_IO "Support PCM file read and write" ON)
+option(BUILD_PCM_IO "whether to build PCM IO library" ON)
+option(BUILD_TESTING "whether to build unit test" ON)
 
 
-add_subdirectory(src)
-if(ENABLE_PCM_IO)
-  add_subdirectory(src/pcm)
+if(BUILD_PCM_IO)
+	set(SUPPORT_PCM TRUE)
 endif()
 
-add_executable(test_pcm main.cc)
+if(BUILD_TESTING)
+	add_subdirectory(tests)
+endif()
+
+add_subdirectory(src)
+
+
 

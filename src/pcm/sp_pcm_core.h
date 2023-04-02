@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-float *sp_pcm_read_linear(sp_pcm_handle_t *pcm_handle, void *raw_data, int bytes, FILE *fin);
+float *sp_pcm_read_linear(sp_pcm_handle_t *pcm_handle, void *raw_data, int length, FILE *fin);
 int sp_pcm_write_linear(sp_pcm_handle_t *pcm_handle, float *pcm_data, int length, FILE *fout);
 
 

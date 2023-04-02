@@ -1,13 +1,3 @@
-/*
- ============================================================================
- Name        : Soundproof.c
- Author      : 
- Version     :
- Copyright   : Your copyright notice
- Description : Hello World in C, Ansi-style
- ============================================================================
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,8 +8,8 @@ int main()
 	char input_file[256];
 	char output_file[256];
 
-	sprintf(input_file, "%s", "sample/sp_linear_chn1_8k_16bit.pcm");
-	sprintf(output_file, "%s", "sample/sp_linear_chn1_8k_16bit_out.pcm");
+	sprintf(input_file, "%s", "assets/sp_linear_chn1_8k_16bit.pcm");
+	sprintf(output_file, "%s", "assets/sp_linear_chn1_8k_16bit_out.pcm");
 
 	sp_pcm_handle_t pcm_handle;
 	pcm_handle.sample_rate = 8000;
