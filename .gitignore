@@ -1,3 +1,4 @@
-.idea
-test.py
+# Build outputs
+bin/
 build/
+lib/

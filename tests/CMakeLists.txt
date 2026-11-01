@@ -1,5 +1,0 @@
-if(SUPPORT_PCM)
-	add_executable(test_pcm test_pcm.c)
-	target_link_libraries(test_pcm PUBLIC sp_pcm)
-	target_include_directories(test_pcm PUBLIC ${PROJECT_SOURCE_DIR}/src/pcm/)
-endif()
