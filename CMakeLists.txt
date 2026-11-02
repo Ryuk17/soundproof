@@ -6,6 +6,8 @@
 #   A super build may provide them instead:
 #     absl::strings target, NEON_FFT_SOURCE_DIR, PFFFT_SOURCE_DIR, EIGEN3_ROOT
 #
+#   Optional: the MNN inference runtime is fetched only with -DWITH_MNN=ON.
+#
 #   Build (Windows, MinGW):
 #     cmake -S . -B build -G "MinGW Makefiles" \
 #           -DCMAKE_TOOLCHAIN_FILE=toolchains/x86_64-windows.cmake
@@ -56,6 +58,14 @@ option(BUILD_AE_IE   "Build libAE_IE and test_ae_ie"     ON)
 option(BUILD_AE_TS   "Build libAE_TS and test_ae_ts"     ON)
 option(BUILD_AE_DR   "Build libAE_DR and test_ae_dr"     ON)
 
+# Optional deep-learning runtime (MNN). OFF by default: heavy dependency
+# (static lib ~12 MB, several minutes to build) used by future DNN modules.
+option(WITH_MNN     "Build the MNN inference runtime"              OFF)
+option(WITH_MNN_LLM "Build MNN with LLM support (implies WITH_MNN)" OFF)
+if(WITH_MNN_LLM)
+    set(WITH_MNN ON)
+endif()
+
 # ============================================================================
 # Third-party dependencies — FetchContent when not provided by a super build
 # ============================================================================
@@ -76,6 +86,18 @@ set(PFFFT_HASH    "SHA256=29b3b0bf83ace5e32ad4fb26a99fe13284240a4d4f1b762970aa19
 set(EIGEN_VERSION "3.4.0")
 set(EIGEN_URL     "https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz")
 set(EIGEN_HASH    "SHA256=8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72")
+
+if(WITH_MNN)
+    include(cmake/mnn.cmake)
+
+    # Generic MNN inference engine (core/mnn_engine). It is internal to the
+    # algorithms built on top of it, so its sources are compiled directly into
+    # the consuming target instead of producing a standalone library.
+    set(AE_MNN_ENGINE_SRC
+        "${AE_CORE}/mnn_engine/mnn_engine.cc"
+        "${AE_CORE}/mnn_engine/mnn_model_reader.cc"
+    )
+endif()
 
 # absl: the super build provides absl::strings; fetch it for standalone builds.
 if(NOT TARGET absl::strings)
@@ -282,6 +304,9 @@ if(BUILD_AE_VAD)
     )
 
     file(GLOB VAD_SRC "${AE_CORE}/voice_activity_detection/*.cc")
+    # silero_vad.cc depends on MNN; it is added explicitly below when
+    # WITH_MNN=ON so the default DSP-only build stays MNN-free.
+    list(FILTER VAD_SRC EXCLUDE REGEX "silero_vad\\.cc$")
     file(GLOB ISAC_VAD_SRC "${AE_CORE}/voice_activity_detection/isac/main/source/*.c")
     target_sources(AE_VAD PRIVATE ${VAD_SRC} ${ISAC_VAD_SRC} ${RESAMPLER_SRC} ${RESAMPLER_DEPS})
 
@@ -299,7 +324,22 @@ if(BUILD_AE_VAD)
     target_compile_definitions(AE_VAD PRIVATE AUDIO_ENGINE_EXPORTS)
     set_target_properties(AE_VAD PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
 
+    if(WITH_MNN)
+        # Silero VAD runs through the internal MNN engine; both are compiled
+        # straight into AE_VAD (no standalone libraries).
+        target_sources(AE_VAD PRIVATE
+            "${AE_CORE}/voice_activity_detection/silero_vad.cc"
+            ${AE_MNN_ENGINE_SRC}
+        )
+        target_include_directories(AE_VAD PRIVATE "${AE_CORE}/mnn_engine")
+        target_link_libraries(AE_VAD PRIVATE soundproof_mnn)
+        target_compile_definitions(AE_VAD PRIVATE AE_WITH_MNN=1)
+    endif()
+
     add_ae_test(test_ae_vad "test_ae_vad.cc" AE_VAD)
+    if(WITH_MNN)
+        target_compile_definitions(test_ae_vad PRIVATE AE_WITH_MNN=1)
+    endif()
 endif()
 
 # ============================================================================
@@ -693,4 +733,28 @@ if(BUILD_AE_DR)
     set_target_properties(AE_DR PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
 
     add_ae_test(test_ae_dr "test_ae_dr.cc" AE_DR)
+endif()
+
+# ============================================================================
+# test_mnn_engine — only when WITH_MNN=ON. The engine sources are compiled
+# straight into the test executable (no standalone library).
+# ============================================================================
+if(WITH_MNN)
+    add_executable(test_mnn_engine
+        "${AE_TESTS}/test_mnn_engine.cc"
+        ${AE_MNN_ENGINE_SRC}
+    )
+
+    target_include_directories(test_mnn_engine PRIVATE
+        ${LIB_COMMON_INCLUDES}
+        "${AE_CORE}/mnn_engine"
+    )
+
+    target_link_libraries(test_mnn_engine PRIVATE soundproof_mnn)
+    if(WIN32 AND MINGW)
+        target_link_libraries(test_mnn_engine PRIVATE winmm)
+    endif()
+
+    add_test(NAME test_mnn_engine COMMAND test_mnn_engine
+             WORKING_DIRECTORY "${AE_PROJECT_ROOT}")
 endif()

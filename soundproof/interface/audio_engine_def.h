@@ -2,11 +2,15 @@
  * @Author: Ryuk
  * @Date: 2026-08-09 19:02:18
  * @LastEditors: Ryuk
- * @LastEditTime: 2026-08-11
+ * @LastEditTime: 2026-11-01 22:55:02
  * @Description: Public API definitions — symbol visibility macro and status codes
  */
 #ifndef AUDIO_ENGINE_DEF_H
 #define AUDIO_ENGINE_DEF_H
+
+#define AUDIO_ENGINE_API_VERSION "1.0.0"
+
+#define AUDIO_ENGINE_MAX_MODEL_PATH_LEN 256
 
 /* ============================================================================
  * Symbol visibility: AUDIO_ENGINE_API
@@ -25,6 +29,8 @@
 #else
     #define AUDIO_ENGINE_API __attribute__((visibility("default")))
 #endif
+
+
 
 /* ============================================================================
  * Unified status codes returned by all libAE_xxx API functions
