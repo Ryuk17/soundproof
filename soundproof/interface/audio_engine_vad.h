@@ -2,7 +2,7 @@
  * @Author: Ryuk
  * @Date: 2026-08-09 18:44:06
  * @LastEditors: Ryuk
- * @LastEditTime: 2026-11-01 22:55:08
+ * @LastEditTime: 2026-11-02 23:34:50
  * @Description: VAD (Voice Activity Detection) unified C interface
  */
 #ifndef AUDIO_ENGINE_VAD_H
@@ -25,7 +25,7 @@ typedef struct {
     int frame_len;       /* samples per Process call, must == sample_rate/100 (10ms)
                             for both modes (silero buffers 10ms chunks internally) */
     int vad_mode;        /* 0: dsp (WebRTC) mode, 1: silero vad (requires -DWITH_MNN=ON) */
-    char model_path[AUDIO_ENGINE_MAX_MODEL_PATH_LEN]; /* silero: path to the .mnn model;
+    char model_path[AUDIO_ENGINE_MAX_FILE_PATH_LEN]; /* silero: path to the .mnn model;
                                                          ignored by dsp mode */
 } VadInitConfig;
 

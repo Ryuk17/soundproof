@@ -511,6 +511,15 @@ int main(int argc, char** argv) {
   if (argc >= 4 && std::strcmp(argv[1], "--child") == 0) {
     return RunChild(argv[2], std::atoi(argv[3]));
   }
+  if (argc >= 3 && std::strcmp(argv[1], "--dump") == 0) {
+    std::unique_ptr<Engine> engine = Engine::CreateFromFile(argv[2]);
+    if (engine == nullptr) {
+      std::printf("failed to load %s\n", argv[2]);
+      return 1;
+    }
+    PrintEngineInfo(*engine);
+    return 0;
+  }
 
   std::string model_path = kDefaultModelPath;
   if (argc >= 3 && std::strcmp(argv[1], "--model") == 0) {

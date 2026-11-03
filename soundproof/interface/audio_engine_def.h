@@ -2,7 +2,7 @@
  * @Author: Ryuk
  * @Date: 2026-08-09 19:02:18
  * @LastEditors: Ryuk
- * @LastEditTime: 2026-11-01 22:55:02
+ * @LastEditTime: 2026-11-02 23:34:58
  * @Description: Public API definitions — symbol visibility macro and status codes
  */
 #ifndef AUDIO_ENGINE_DEF_H
@@ -10,7 +10,7 @@
 
 #define AUDIO_ENGINE_API_VERSION "1.0.0"
 
-#define AUDIO_ENGINE_MAX_MODEL_PATH_LEN 256
+#define AUDIO_ENGINE_MAX_FILE_PATH_LEN 256
 
 /* ============================================================================
  * Symbol visibility: AUDIO_ENGINE_API
