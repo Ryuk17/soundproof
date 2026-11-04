@@ -66,6 +66,7 @@ option(BUILD_AE_TS   "Build libAE_TS and test_ae_ts"     ON)
 option(BUILD_AE_DR   "Build libAE_DR and test_ae_dr"     ON)
 option(BUILD_AE_KWS  "Build libAE_KWS and test_ae_kws (requires WITH_MNN)" ON)
 option(BUILD_AE_ASR  "Build libAE_ASR and test_ae_asr (requires WITH_MNN)" ON)
+option(BUILD_AE_SR   "Build libAE_SR and test_ae_sr (requires WITH_MNN)"   ON)
 
 # Optional deep-learning runtime (MNN). OFF by default: heavy dependency
 # (static lib ~12 MB, several minutes to build) used by future DNN modules.
@@ -433,6 +434,48 @@ if(BUILD_AE_ASR)
         set_target_properties(AE_ASR PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
 
         add_ae_test(test_ae_asr "test_ae_asr.cc" AE_ASR)
+    endif()
+endif()
+
+# ============================================================================
+# libAE_SR + test_ae_sr — speaker recognition (identification/verification)
+# with pluggable embedding backends (wespeaker/3d-speaker/nemo).
+# Requires MNN.
+# ============================================================================
+if(BUILD_AE_SR)
+    if(NOT WITH_MNN)
+        message(STATUS "BUILD_AE_SR=ON but WITH_MNN=OFF; skipping libAE_SR")
+    else()
+        include(cmake/knf.cmake)
+
+        set(SR_CORE_SRC
+            "${AE_CORE}/speaker_recognition/sr_backend_factory.cc"
+            "${AE_CORE}/speaker_recognition/general_sr_backend.cc"
+            "${AE_CORE}/speaker_recognition/nemo_sr_backend.cc"
+            "${AE_CORE}/speaker_recognition/speaker_embedding_manager.cc"
+            "${AE_CORE}/speaker_recognition/speaker_recognizer.cc"
+        )
+
+        add_library(AE_SR STATIC
+            "${AE_ROOT}/interface/audio_engine_sr.cpp"
+            "${AE_ROOT}/utils/dr_wav.cc"
+            "${AE_ROOT}/feature/feature_extractor.cc"
+            ${SR_CORE_SRC}
+            ${AE_MNN_ENGINE_SRC}
+        )
+
+        target_include_directories(AE_SR PUBLIC
+            ${LIB_COMMON_INCLUDES}
+            "${AE_CORE}/speaker_recognition"
+        )
+        target_link_libraries(AE_SR PRIVATE
+            soundproof_mnn
+            kaldi-native-fbank-core
+        )
+        target_compile_definitions(AE_SR PRIVATE AUDIO_ENGINE_EXPORTS)
+        set_target_properties(AE_SR PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
+
+        add_ae_test(test_ae_sr "test_ae_sr.cc" AE_SR)
     endif()
 endif()
 

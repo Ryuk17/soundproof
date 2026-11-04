@@ -8,41 +8,48 @@
 namespace soundproof {
 namespace {
 
-knf::FbankOptions MakeFbankOptions() {
+knf::FbankOptions MakeFbankOptions(const FeatureExtractorConfig& config) {
   knf::FbankOptions opts;
-  opts.frame_opts.dither = 0.0f;
-  opts.frame_opts.snip_edges = false;
-  opts.frame_opts.samp_freq = static_cast<float>(FeatureExtractor::kSampleRate);
-  opts.frame_opts.frame_shift_ms = 10.0f;
-  opts.frame_opts.frame_length_ms = 25.0f;
-  opts.frame_opts.remove_dc_offset = true;
-  opts.frame_opts.preemph_coeff = 0.97f;
-  opts.frame_opts.window_type = "povey";
+  opts.frame_opts.dither = config.dither;
+  opts.frame_opts.snip_edges = config.snip_edges;
+  opts.frame_opts.samp_freq = static_cast<float>(config.sample_rate);
+  opts.frame_opts.frame_shift_ms = config.frame_shift_ms;
+  opts.frame_opts.frame_length_ms = config.frame_length_ms;
+  opts.frame_opts.remove_dc_offset = config.remove_dc_offset;
+  opts.frame_opts.preemph_coeff = config.preemph_coeff;
+  opts.frame_opts.window_type = config.window_type;
 
-  opts.mel_opts.num_bins = FeatureExtractor::kFeatureDim;
-  opts.mel_opts.low_freq = 20.0f;
-  opts.mel_opts.high_freq = -400.0f;  // Nyquist - 400 Hz
-  opts.mel_opts.is_librosa = false;
+  opts.mel_opts.num_bins = config.feature_dim;
+  opts.mel_opts.low_freq = config.low_freq;
+  opts.mel_opts.high_freq = config.high_freq;
+  opts.mel_opts.is_librosa = config.is_librosa;
   return opts;
 }
 
 }  // namespace
 
 struct FeatureExtractor::Impl {
-  Impl() : fbank(new knf::OnlineFbank(MakeFbankOptions())) {}
+  explicit Impl(const FeatureExtractorConfig& config)
+      : fbank(new knf::OnlineFbank(MakeFbankOptions(config))) {}
 
   std::unique_ptr<knf::OnlineFbank> fbank;
   int32_t last_frame_index = 0;
 };
 
-FeatureExtractor::FeatureExtractor() : impl_(new Impl()) {}
+FeatureExtractor::FeatureExtractor(const FeatureExtractorConfig& config)
+    : impl_(new Impl(config)), config_(config) {}
 FeatureExtractor::~FeatureExtractor() = default;
 
 void FeatureExtractor::AcceptWaveform(const float* samples, int32_t n) {
   if (samples == nullptr || n <= 0) {
     return;
   }
-  impl_->fbank->AcceptWaveform(static_cast<float>(kSampleRate), samples, n);
+  impl_->fbank->AcceptWaveform(static_cast<float>(config_.sample_rate), samples,
+                               n);
+}
+
+void FeatureExtractor::InputFinished() {
+  impl_->fbank->InputFinished();
 }
 
 int32_t FeatureExtractor::NumFramesReady() const {
@@ -86,7 +93,7 @@ int32_t FeatureExtractor::FeatureDim() const {
 }
 
 void FeatureExtractor::Reset() {
-  impl_->fbank.reset(new knf::OnlineFbank(MakeFbankOptions()));
+  impl_->fbank.reset(new knf::OnlineFbank(MakeFbankOptions(config_)));
   impl_->last_frame_index = 0;
 }
 

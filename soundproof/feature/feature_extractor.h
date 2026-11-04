@@ -3,28 +3,48 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace soundproof {
 
-// 80-dim log-mel filter bank features for the zipformer2 KWS model.
-//
-// Configuration matches sherpa-mnn's FeatureExtractor defaults:
-//   sampling rate 16 kHz, 25 ms window / 10 ms shift, snip_edges=false,
-//   povey window, pre-emphasis 0.97, remove DC, mel bins 20..7600 Hz,
-//   dither disabled. Input samples must be normalized to [-1, 1].
+// Configuration of the kaldi-style fbank feature extractor.
+// The defaults match sherpa-mnn's FeatureExtractor and are shared by the
+// KWS / ASR / speaker-recognition algorithms.
+struct FeatureExtractorConfig {
+  int32_t sample_rate = 16000;
+  int32_t feature_dim = 80;
+  float frame_length_ms = 25.0f;
+  float frame_shift_ms = 10.0f;
+  bool snip_edges = false;
+  float low_freq = 20.0f;
+  float high_freq = -400.0f;  // <= 0: offset from Nyquist
+  float dither = 0.0f;
+  bool remove_dc_offset = true;
+  float preemph_coeff = 0.97f;
+  std::string window_type = "povey";
+  bool is_librosa = false;
+};
+
+// Streaming log-mel filter bank extractor.
+// Input samples must be normalized to [-1, 1] (the caller decides the int16
+// scaling based on the model metadata).
 class FeatureExtractor {
  public:
   static constexpr int32_t kSampleRate = 16000;
   static constexpr int32_t kFeatureDim = 80;
 
-  FeatureExtractor();
+  explicit FeatureExtractor(const FeatureExtractorConfig& config = {});
   ~FeatureExtractor();
 
   FeatureExtractor(const FeatureExtractor&) = delete;
   FeatureExtractor& operator=(const FeatureExtractor&) = delete;
 
   void AcceptWaveform(const float* samples, int32_t n);
+
+  // Flushes the last (incomplete) frame. Used for offline/one-shot feature
+  // extraction. Streaming callers do not need to call it.
+  void InputFinished();
 
   int32_t NumFramesReady() const;
 
@@ -35,12 +55,15 @@ class FeatureExtractor {
 
   int32_t FeatureDim() const;
 
+  const FeatureExtractorConfig& config() const { return config_; }
+
   // Drops all buffered audio and features.
   void Reset();
 
  private:
   struct Impl;
   std::unique_ptr<Impl> impl_;
+  FeatureExtractorConfig config_;
 };
 
 }  // namespace soundproof
