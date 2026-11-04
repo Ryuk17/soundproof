@@ -1,5 +1,5 @@
-#ifndef SOUNDPROOF_CORE_MNN_ENGINE_MNN_ENGINE_H_
-#define SOUNDPROOF_CORE_MNN_ENGINE_MNN_ENGINE_H_
+#ifndef SOUNDPROOF_MNN_ENGINE_MNN_ENGINE_H_
+#define SOUNDPROOF_MNN_ENGINE_MNN_ENGINE_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -114,4 +114,4 @@ class Engine {
 }  // namespace mnn_engine
 }  // namespace soundproof
 
-#endif  // SOUNDPROOF_CORE_MNN_ENGINE_MNN_ENGINE_H_
+#endif  // SOUNDPROOF_MNN_ENGINE_MNN_ENGINE_H_

@@ -1,4 +1,4 @@
-#include "core/keywords_spotting/symbol_table.h"
+#include "utils/symbol_table.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -81,6 +81,17 @@ const std::string& SymbolTable::GetSymbol(int32_t id) const {
     return kEmptySymbol;
   }
   return id_to_symbol_[static_cast<size_t>(id)];
+}
+
+std::string SymbolTable::GetDisplaySymbol(int32_t id) const {
+  std::string symbol = GetSymbol(id);
+  // UTF-8 for U+2581 (LOWER ONE EIGHTH BLOCK), the BPE word boundary marker.
+  if (symbol.size() >= 3 && static_cast<uint8_t>(symbol[0]) == 0xe2 &&
+      static_cast<uint8_t>(symbol[1]) == 0x96 &&
+      static_cast<uint8_t>(symbol[2]) == 0x81) {
+    symbol.replace(0, 3, " ");
+  }
+  return symbol;
 }
 
 }  // namespace soundproof

@@ -42,6 +42,13 @@ set(AE_CORE  "${AE_ROOT}/core")                 # was audio_processing
 set(AE_TESTS "${AE_PROJECT_ROOT}/tests")        # was unitest
 set(RNN_VAD_DIR "${AE_PROJECT_ROOT}/models/rnnoise/src")  # was model_weights/rnnoise/src
 
+# Shared algorithm components used by the MNN-backed algorithms (KWS, ASR).
+set(AE_ALGO_COMMON_SRC
+    "${AE_ROOT}/feature/feature_extractor.cc"
+    "${AE_ROOT}/utils/symbol_table.cc"
+    "${AE_ROOT}/model/online_transducer_model.cc"
+)
+
 # ============================================================================
 # Build options — one per module (controls lib + interface test)
 # ============================================================================
@@ -58,6 +65,7 @@ option(BUILD_AE_IE   "Build libAE_IE and test_ae_ie"     ON)
 option(BUILD_AE_TS   "Build libAE_TS and test_ae_ts"     ON)
 option(BUILD_AE_DR   "Build libAE_DR and test_ae_dr"     ON)
 option(BUILD_AE_KWS  "Build libAE_KWS and test_ae_kws (requires WITH_MNN)" ON)
+option(BUILD_AE_ASR  "Build libAE_ASR and test_ae_asr (requires WITH_MNN)" ON)
 
 # Optional deep-learning runtime (MNN). OFF by default: heavy dependency
 # (static lib ~12 MB, several minutes to build) used by future DNN modules.
@@ -91,12 +99,12 @@ set(EIGEN_HASH    "SHA256=8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13
 if(WITH_MNN)
     include(cmake/mnn.cmake)
 
-    # Generic MNN inference engine (core/mnn_engine). It is internal to the
+    # Generic MNN inference engine (mnn_engine). It is internal to the
     # algorithms built on top of it, so its sources are compiled directly into
     # the consuming target instead of producing a standalone library.
     set(AE_MNN_ENGINE_SRC
-        "${AE_CORE}/mnn_engine/mnn_engine.cc"
-        "${AE_CORE}/mnn_engine/mnn_model_reader.cc"
+        "${AE_ROOT}/mnn_engine/mnn_engine.cc"
+        "${AE_ROOT}/mnn_engine/mnn_model_reader.cc"
     )
 endif()
 
@@ -332,7 +340,7 @@ if(BUILD_AE_VAD)
             "${AE_CORE}/voice_activity_detection/silero_vad.cc"
             ${AE_MNN_ENGINE_SRC}
         )
-        target_include_directories(AE_VAD PRIVATE "${AE_CORE}/mnn_engine")
+        target_include_directories(AE_VAD PRIVATE "${AE_ROOT}/mnn_engine")
         target_link_libraries(AE_VAD PRIVATE soundproof_mnn)
         target_compile_definitions(AE_VAD PRIVATE AE_WITH_MNN=1)
     endif()
@@ -354,11 +362,8 @@ if(BUILD_AE_KWS)
         include(cmake/knf.cmake)
 
         set(KWS_CORE_SRC
-            "${AE_CORE}/keywords_spotting/feature_extractor.cc"
-            "${AE_CORE}/keywords_spotting/symbol_table.cc"
             "${AE_CORE}/keywords_spotting/context_graph.cc"
             "${AE_CORE}/keywords_spotting/keyword_encoder.cc"
-            "${AE_CORE}/keywords_spotting/online_transducer_model.cc"
             "${AE_CORE}/keywords_spotting/keyword_decoder.cc"
             "${AE_CORE}/keywords_spotting/keyword_spotter.cc"
         )
@@ -367,6 +372,7 @@ if(BUILD_AE_KWS)
             "${AE_ROOT}/interface/audio_engine_kws.cpp"
             "${AE_ROOT}/utils/dr_wav.cc"
             ${KWS_CORE_SRC}
+            ${AE_ALGO_COMMON_SRC}
             ${AE_MNN_ENGINE_SRC}
         )
 
@@ -382,6 +388,51 @@ if(BUILD_AE_KWS)
         set_target_properties(AE_KWS PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
 
         add_ae_test(test_ae_kws "test_ae_kws.cc" AE_KWS)
+    endif()
+endif()
+
+# ============================================================================
+# libAE_ASR + test_ae_asr — streaming ASR with pluggable model backends
+# (transducer: zipformer/zipformer2/conformer/lstm; paraformer).
+# Requires MNN.
+# ============================================================================
+if(BUILD_AE_ASR)
+    if(NOT WITH_MNN)
+        message(STATUS "BUILD_AE_ASR=ON but WITH_MNN=OFF; skipping libAE_ASR")
+    else()
+        include(cmake/knf.cmake)
+
+        set(ASR_CORE_SRC
+            "${AE_CORE}/speech_recognition/asr_backend_factory.cc"
+            "${AE_CORE}/speech_recognition/transducer_backend.cc"
+            "${AE_CORE}/speech_recognition/transducer_decoder.cc"
+            "${AE_CORE}/speech_recognition/paraformer_model.cc"
+            "${AE_CORE}/speech_recognition/paraformer_backend.cc"
+            "${AE_CORE}/speech_recognition/paraformer_utils.cc"
+            "${AE_CORE}/speech_recognition/endpoint.cc"
+            "${AE_CORE}/speech_recognition/online_recognizer.cc"
+        )
+
+        add_library(AE_ASR STATIC
+            "${AE_ROOT}/interface/audio_engine_asr.cpp"
+            "${AE_ROOT}/utils/dr_wav.cc"
+            ${ASR_CORE_SRC}
+            ${AE_ALGO_COMMON_SRC}
+            ${AE_MNN_ENGINE_SRC}
+        )
+
+        target_include_directories(AE_ASR PUBLIC
+            ${LIB_COMMON_INCLUDES}
+            "${AE_CORE}/speech_recognition"
+        )
+        target_link_libraries(AE_ASR PRIVATE
+            soundproof_mnn
+            kaldi-native-fbank-core
+        )
+        target_compile_definitions(AE_ASR PRIVATE AUDIO_ENGINE_EXPORTS)
+        set_target_properties(AE_ASR PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
+
+        add_ae_test(test_ae_asr "test_ae_asr.cc" AE_ASR)
     endif()
 endif()
 
@@ -790,7 +841,7 @@ if(WITH_MNN)
 
     target_include_directories(test_mnn_engine PRIVATE
         ${LIB_COMMON_INCLUDES}
-        "${AE_CORE}/mnn_engine"
+        "${AE_ROOT}/mnn_engine"
     )
 
     target_link_libraries(test_mnn_engine PRIVATE soundproof_mnn)

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "core/keywords_spotting/symbol_table.h"
+#include "utils/symbol_table.h"
 
 namespace soundproof {
 

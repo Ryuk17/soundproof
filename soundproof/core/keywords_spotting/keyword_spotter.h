@@ -7,10 +7,10 @@
 #include <string>
 
 #include "core/keywords_spotting/context_graph.h"
-#include "core/keywords_spotting/feature_extractor.h"
+#include "feature/feature_extractor.h"
 #include "core/keywords_spotting/keyword_encoder.h"
-#include "core/keywords_spotting/online_transducer_model.h"
-#include "core/keywords_spotting/symbol_table.h"
+#include "model/online_transducer_model.h"
+#include "utils/symbol_table.h"
 
 namespace soundproof {
 

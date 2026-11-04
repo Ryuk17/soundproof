@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "core/mnn_engine/mnn_engine.h"
+#include "mnn_engine/mnn_engine.h"
 
 namespace soundproof {
 

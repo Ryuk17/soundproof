@@ -1,5 +1,5 @@
-#ifndef SOUNDPROOF_CORE_MNN_ENGINE_MNN_MODEL_READER_H_
-#define SOUNDPROOF_CORE_MNN_ENGINE_MNN_MODEL_READER_H_
+#ifndef SOUNDPROOF_MNN_ENGINE_MNN_MODEL_READER_H_
+#define SOUNDPROOF_MNN_ENGINE_MNN_MODEL_READER_H_
 
 #include <cstdint>
 #include <string>
@@ -24,4 +24,4 @@ bool ReadModelFile(const std::string& path, std::vector<uint8_t>* out);
 }  // namespace mnn_engine
 }  // namespace soundproof
 
-#endif  // SOUNDPROOF_CORE_MNN_ENGINE_MNN_MODEL_READER_H_
+#endif  // SOUNDPROOF_MNN_ENGINE_MNN_MODEL_READER_H_

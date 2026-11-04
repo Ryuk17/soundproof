@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "core/keywords_spotting/context_graph.h"
-#include "core/keywords_spotting/online_transducer_model.h"
+#include "model/online_transducer_model.h"
 #include "utils/logging.h"
 
 namespace soundproof {

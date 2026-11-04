@@ -1,4 +1,4 @@
-#include "core/keywords_spotting/feature_extractor.h"
+#include "feature/feature_extractor.h"
 
 #include <algorithm>
 

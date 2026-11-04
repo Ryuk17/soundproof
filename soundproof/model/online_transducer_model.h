@@ -1,11 +1,11 @@
-#ifndef SOUNDPROOF_CORE_KEYWORDS_SPOTTING_ONLINE_TRANSDUCER_MODEL_H_
-#define SOUNDPROOF_CORE_KEYWORDS_SPOTTING_ONLINE_TRANSDUCER_MODEL_H_
+#ifndef SOUNDPROOF_MODEL_ONLINE_TRANSDUCER_MODEL_H_
+#define SOUNDPROOF_MODEL_ONLINE_TRANSDUCER_MODEL_H_
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "core/mnn_engine/mnn_engine.h"
+#include "mnn_engine/mnn_engine.h"
 
 namespace soundproof {
 
@@ -42,6 +42,9 @@ class OnlineTransducerModel {
   int32_t VocabSize() const { return vocab_size_; }
   int32_t FeatureDim() const { return feature_dim_; }
   int32_t JoinerDim() const { return joiner_dim_; }
+  // Value of the encoder's "model_type" metadata (e.g. "zipformer",
+  // "zipformer2", "conformer"); empty if the model does not carry it.
+  const std::string& ModelType() const { return model_type_; }
 
   // Runs the encoder for one chunk of |chunk_size| feature frames.
   // |features| has chunk_size * FeatureDim() floats (row-major).
@@ -90,9 +93,10 @@ class OnlineTransducerModel {
   int32_t vocab_size_ = 0;
   int32_t feature_dim_ = 0;
   int32_t joiner_dim_ = 0;
+  std::string model_type_;
   bool ok_ = false;
 };
 
 }  // namespace soundproof
 
-#endif  // SOUNDPROOF_CORE_KEYWORDS_SPOTTING_ONLINE_TRANSDUCER_MODEL_H_
+#endif  // SOUNDPROOF_MODEL_ONLINE_TRANSDUCER_MODEL_H_

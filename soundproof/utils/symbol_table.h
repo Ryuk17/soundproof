@@ -1,5 +1,5 @@
-#ifndef SOUNDPROOF_CORE_KEYWORDS_SPOTTING_SYMBOL_TABLE_H_
-#define SOUNDPROOF_CORE_KEYWORDS_SPOTTING_SYMBOL_TABLE_H_
+#ifndef SOUNDPROOF_UTILS_SYMBOL_TABLE_H_
+#define SOUNDPROOF_UTILS_SYMBOL_TABLE_H_
 
 #include <cstdint>
 #include <string>
@@ -23,6 +23,10 @@ class SymbolTable {
   // Returns an empty string if the id is unknown.
   const std::string& GetSymbol(int32_t id) const;
 
+  // Returns the symbol as display text: the BPE word-boundary marker
+  // (U+2581 "▁") is replaced by a space. Used when building ASR text.
+  std::string GetDisplaySymbol(int32_t id) const;
+
   size_t Size() const { return id_to_symbol_.size(); }
 
  private:
@@ -33,4 +37,4 @@ class SymbolTable {
 
 }  // namespace soundproof
 
-#endif  // SOUNDPROOF_CORE_KEYWORDS_SPOTTING_SYMBOL_TABLE_H_
+#endif  // SOUNDPROOF_UTILS_SYMBOL_TABLE_H_

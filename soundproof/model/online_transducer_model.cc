@@ -1,4 +1,4 @@
-#include "core/keywords_spotting/online_transducer_model.h"
+#include "model/online_transducer_model.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -96,6 +96,10 @@ bool OnlineTransducerModel::InitEncoder(const std::string& path,
   if (!ParseIntMetadata(metadata, "T", &chunk_size_) ||
       !ParseIntMetadata(metadata, "decode_chunk_len", &chunk_shift_)) {
     return false;
+  }
+  const auto model_type_it = metadata.find("model_type");
+  if (model_type_it != metadata.end()) {
+    model_type_ = model_type_it->second;
   }
 
   const std::vector<mnn_engine::Tensor> inputs = encoder_.inputs();
