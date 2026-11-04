@@ -228,14 +228,20 @@ extern "C" int AudioEngine_Ie_SetNoiseEstimate(
  * ==========================================================================*/
 extern "C" int AudioEngine_Ie_Process(
     IeHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out)
+    const IeInput_t* input,
+    IeResult_t* result)
 {
     if (!handle) {
         LOG_WARN("AudioEngine_Ie_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Ie_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int in_samples = input->in_samples;
+    short* audio_out = result->audio_out;
     if (!audio_in) {
         LOG_WARN("AudioEngine_Ie_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;

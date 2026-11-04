@@ -108,14 +108,14 @@ int CallProcess(SrHandle handle, const int16_t* frame, int trigger,
                 SrOutput* out)
 {
     char name[256] = {0};
-    SrResult result;
+    SrResult_t result;
     result.speaker_name = name;
     result.name_capacity = sizeof(name);
     result.name_len = 0;
     result.has_result = 0;
     result.score = 0.0f;
-    const int ret = AudioEngine_Sr_Process(handle, frame, FRAME_LEN, trigger,
-                                           &result);
+    SrInput_t input{frame, FRAME_LEN, trigger};
+    const int ret = AudioEngine_Sr_Process(handle, &input, &result);
     if (out != nullptr) {
         out->name = name;
         out->has_result = result.has_result;
@@ -156,7 +156,7 @@ int CallIdentify(SrHandle handle, const std::vector<int16_t>& samples,
                  SrOutput* out)
 {
     char name[256] = {0};
-    SrResult result;
+    SrResult_t result;
     result.speaker_name = name;
     result.name_capacity = sizeof(name);
     result.name_len = 0;
@@ -376,7 +376,7 @@ void TestErrors(const std::vector<int16_t>& wav_a)
 
     // Buffer too small.
     char name[2] = {0};
-    SrResult result;
+    SrResult_t result;
     result.speaker_name = name;
     result.name_capacity = sizeof(name);
     Check(AudioEngine_Sr_Identify(handle, segment.data(),

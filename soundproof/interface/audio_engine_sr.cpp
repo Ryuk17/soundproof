@@ -97,7 +97,7 @@ bool ReadWav16kMono(const std::string& path, std::vector<int16_t>* samples)
     return ok;
 }
 
-int FillResult(const soundproof::SrRecognizerResult& core, SrResult* out)
+int FillResult(const soundproof::SrRecognizerResult& core, SrResult_t* out)
 {
     if (!out) {
         LOG_WARN("SR: result is NULL");
@@ -332,18 +332,24 @@ AUDIO_ENGINE_API int AudioEngine_Sr_ResetParam(SrHandle handle,
  * Online recognition
  * ==========================================================================*/
 AUDIO_ENGINE_API int AudioEngine_Sr_Process(SrHandle handle,
-                                            const short* audio_in, int samples,
-                                            int trigger, SrResult* result)
+                                            const SrInput_t* input,
+                                            SrResult_t* result)
 {
-    LOG_DEBUG("AudioEngine_Sr_Process, handle=%p, samples=%d, trigger=%d",
-              (void*)handle, samples, trigger);
-
     if (!handle) {
         LOG_WARN("AudioEngine_Sr_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
-    if (!audio_in || !result) {
-        LOG_WARN("AudioEngine_Sr_Process: audio_in/result is NULL");
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Sr_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int samples = input->samples;
+    const int trigger = input->trigger;
+    LOG_DEBUG("AudioEngine_Sr_Process, handle=%p, samples=%d, trigger=%d",
+              (void*)handle, samples, trigger);
+    if (!audio_in) {
+        LOG_WARN("AudioEngine_Sr_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
 
@@ -370,7 +376,7 @@ AUDIO_ENGINE_API int AudioEngine_Sr_Process(SrHandle handle,
 
 AUDIO_ENGINE_API int AudioEngine_Sr_Identify(SrHandle handle,
                                              const short* audio_in,
-                                             int samples, SrResult* result)
+                                             int samples, SrResult_t* result)
 {
     LOG_DEBUG("AudioEngine_Sr_Identify, handle=%p, samples=%d",
               (void*)handle, samples);

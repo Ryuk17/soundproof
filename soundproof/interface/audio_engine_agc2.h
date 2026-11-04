@@ -45,14 +45,21 @@ AUDIO_ENGINE_API int AudioEngine_Agc2_SetParam(Agc2Handle handle, const Agc2RtCo
 
 AUDIO_ENGINE_API int AudioEngine_Agc2_ResetParam(Agc2Handle handle, const Agc2RtConfig* rt_config);
 
+typedef struct {
+    const short* audio_in;
+    int in_samples;
+} Agc2Input_t;
+
+typedef struct {
+    short* audio_out;
+    int max_out_samples;
+    int out_samples;
+} Agc2Result_t;
+
 AUDIO_ENGINE_API int AudioEngine_Agc2_Process(
     Agc2Handle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out,
-    int max_out_samples,
-    int* out_samples
-);
+    const Agc2Input_t* input,
+    Agc2Result_t* result);
 
 AUDIO_ENGINE_API int AudioEngine_Agc2_Deinit(Agc2Handle handle);
 

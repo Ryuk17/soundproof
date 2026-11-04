@@ -12,6 +12,8 @@
 #include "interface/audio_engine_hs.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(HsHandle handle, const short* audio_in, int in_samples, short* audio_out);
+
 
 /* DETECT_SAMPLES_PER_BLOCK = 205 is the internal Goertzel window size */
 #define FRAME_LEN (205)
@@ -69,7 +71,7 @@ static void test_normal_flow(const char* input_wav, const char* output_wav)
         int read_samples = wav_reader.ReadSamples(FRAME_LEN, in_buf);
         if (read_samples == 0) break;
 
-        ret = AudioEngine_Hs_Process(handle, in_buf, read_samples, out_buf);
+        ret = CallProcess(handle, in_buf, read_samples, out_buf);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: AudioEngine_Hs_Process returned " << ret
                       << " at frame " << total_frames << std::endl;
@@ -121,7 +123,7 @@ static void test_reset(const char* input_wav)
     for (int i = 0; i < 10; i++) {
         int read = wav_reader.ReadSamples(FRAME_LEN, in_buf);
         if (read == 0) break;
-        AudioEngine_Hs_Process(handle, in_buf, read, out_buf);
+        CallProcess(handle, in_buf, read, out_buf);
     }
 
     /* Reset */
@@ -135,7 +137,7 @@ static void test_reset(const char* input_wav)
     /* Should still be able to process after reset */
     int read = wav_reader.ReadSamples(FRAME_LEN, in_buf);
     if (read > 0) {
-        ret = AudioEngine_Hs_Process(handle, in_buf, read, out_buf);
+        ret = CallProcess(handle, in_buf, read, out_buf);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: Process after Reset returned " << ret << std::endl;
         } else {
@@ -170,7 +172,7 @@ static void test_error_cases(void)
         return;
     }
     int16_t buf[FRAME_LEN] = {0};
-    ret = AudioEngine_Hs_Process(handle, buf, FRAME_LEN, buf);
+    ret = CallProcess(handle, buf, FRAME_LEN, buf);
     std::cout << "  Process without Init = " << ret
               << (ret == AUDIO_ENGINE_ERR_NOT_INITIALIZED ? " OK" : " FAIL") << std::endl;
 
@@ -193,21 +195,21 @@ static void test_error_cases(void)
         return;
     }
 
-    ret = AudioEngine_Hs_Process(handle, NULL, FRAME_LEN, buf);
+    ret = CallProcess(handle, NULL, FRAME_LEN, buf);
     std::cout << "  Process(NULL audio_in) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL audio_out */
-    ret = AudioEngine_Hs_Process(handle, buf, FRAME_LEN, NULL);
+    ret = CallProcess(handle, buf, FRAME_LEN, NULL);
     std::cout << "  Process(NULL audio_out) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* Invalid frame length (0 or negative) */
-    ret = AudioEngine_Hs_Process(handle, buf, 0, buf);
+    ret = CallProcess(handle, buf, 0, buf);
     std::cout << "  Process(in_samples=0) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
-    ret = AudioEngine_Hs_Process(handle, buf, -1, buf);
+    ret = CallProcess(handle, buf, -1, buf);
     std::cout << "  Process(in_samples=-1) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
@@ -237,6 +239,17 @@ static void test_error_cases(void)
     std::cout << "  PASS" << std::endl;
 }
 
+
+static int CallProcess(HsHandle handle, const short* audio_in, int in_samples,
+                       short* audio_out)
+{
+    if (!audio_out) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    HsInput_t input{audio_in, in_samples};
+    HsResult_t result{audio_out};
+    return AudioEngine_Hs_Process(handle, &input, &result);
+}
 
 int main(int argc, char** argv)
 {

@@ -174,18 +174,24 @@ extern "C" int AudioEngine_Ts_Deinit(TsHandle handle)
  * ==========================================================================*/
 extern "C" int AudioEngine_Ts_Process(
     TsHandle handle,
-    const short* audio_in,
-    int in_samples,
-    const short* detection_in,
-    const short* reference_in,
-    float voice_probability,
-    int key_pressed,
-    short* audio_out)
+    const TsInput_t* input,
+    TsResult_t* result)
 {
     if (!handle) {
         LOG_WARN("AudioEngine_Ts_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Ts_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int in_samples = input->in_samples;
+    const short* detection_in = input->detection_in;
+    const short* reference_in = input->reference_in;
+    const float voice_probability = input->voice_probability;
+    const int key_pressed = input->key_pressed;
+    short* audio_out = result->audio_out;
     if (!audio_in) {
         LOG_WARN("AudioEngine_Ts_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;

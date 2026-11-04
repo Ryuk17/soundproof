@@ -212,14 +212,20 @@ extern "C" int AudioEngine_Dr_Deinit(DrHandle handle)
  * ==========================================================================*/
 extern "C" int AudioEngine_Dr_Process(
     DrHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out)
+    const DrInput_t* input,
+    DrResult_t* result)
 {
     if (!handle) {
         LOG_WARN("AudioEngine_Dr_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Dr_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int in_samples = input->in_samples;
+    short* audio_out = result->audio_out;
     if (!audio_in) {
         LOG_WARN("AudioEngine_Dr_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;

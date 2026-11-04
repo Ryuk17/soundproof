@@ -42,15 +42,22 @@ AUDIO_ENGINE_API int AudioEngine_Aec_SetParam(AecHandle handle, const AecRtConfi
 
 AUDIO_ENGINE_API int AudioEngine_Aec_ResetParam(AecHandle handle, const AecRtConfig* rt_config);
 
+typedef struct {
+    const short* nearend_in;   /* mic/capture signal   */
+    const short* farend_in;    /* render/reference     */
+    int in_samples;
+} AecInput_t;
+
+typedef struct {
+    short* audio_out;
+    int max_out_samples;
+    int out_samples;
+} AecResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Aec_Process(
     AecHandle handle,
-    const short* nearend_in,   /* mic/capture signal   */
-    const short* farend_in,    /* render/reference     */
-    int in_samples,
-    short* audio_out,
-    int max_out_samples,
-    int* out_samples
-);
+    const AecInput_t* input,
+    AecResult_t* result);
 
 AUDIO_ENGINE_API int AudioEngine_Aec_Deinit(AecHandle handle);
 

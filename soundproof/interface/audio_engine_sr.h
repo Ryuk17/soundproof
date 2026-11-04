@@ -34,6 +34,13 @@ typedef struct {
     float threshold;      /* identification threshold, default 0.5, (0, 1]    */
 } SrRtConfig;
 
+/* Input of the online interface. */
+typedef struct {
+    const short* audio_in;
+    int samples;
+    int trigger;          /* 1 = KWS fired: infer cached features now         */
+} SrInput_t;
+
 /* Output of the online interface. The caller owns |speaker_name|. */
 typedef struct {
     char* speaker_name;   /* UTF-8 buffer, empty when unknown                 */
@@ -41,7 +48,7 @@ typedef struct {
     int name_len;         /* output: bytes including the trailing NUL         */
     int has_result;       /* output: 1 if this call produced a decision       */
     float score;          /* output: best cosine similarity                   */
-} SrResult;
+} SrResult_t;
 
 
 AUDIO_ENGINE_API SrHandle AudioEngine_Sr_Create(void);
@@ -60,10 +67,8 @@ AUDIO_ENGINE_API int AudioEngine_Sr_ResetParam(SrHandle handle, const SrRtConfig
               KWS trigger), fill |result| and clear the cache. */
 AUDIO_ENGINE_API int AudioEngine_Sr_Process(
     SrHandle handle,
-    const short* audio_in,
-    int samples,
-    int trigger,
-    SrResult* result
+    const SrInput_t* input,
+    SrResult_t* result
 );
 
 /* One-shot identification of a complete segment (e.g. the audio segment that
@@ -72,7 +77,7 @@ AUDIO_ENGINE_API int AudioEngine_Sr_Identify(
     SrHandle handle,
     const short* audio_in,
     int samples,
-    SrResult* result
+    SrResult_t* result
 );
 
 /* Offline enrollment from a complete PCM utterance. */

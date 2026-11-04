@@ -65,6 +65,15 @@ AUDIO_ENGINE_API int AudioEngine_Dr_Destroy(DrHandle handle);
 /** Initialize the dereverberator. Must be called before Process. */
 AUDIO_ENGINE_API int AudioEngine_Dr_Init(DrHandle handle, const DrInitConfig* init_config);
 
+typedef struct {
+    const short* audio_in;  /* single-channel input PCM */
+    int in_samples;         /* samples in this frame */
+} DrInput_t;
+
+typedef struct {
+    short* audio_out;       /* enhanced output PCM, >= in_samples elements */
+} DrResult_t;
+
 /** Process one frame of mono audio.
  *
  *  @param handle     DR handle (must be initialized)
@@ -79,9 +88,8 @@ AUDIO_ENGINE_API int AudioEngine_Dr_Init(DrHandle handle, const DrInitConfig* in
  */
 AUDIO_ENGINE_API int AudioEngine_Dr_Process(
     DrHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out);
+    const DrInput_t* input,
+    DrResult_t* result);
 
 /** Deinitialize: free internal dereverberator instance, keep handle alive. */
 AUDIO_ENGINE_API int AudioEngine_Dr_Deinit(DrHandle handle);

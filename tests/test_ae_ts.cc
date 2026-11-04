@@ -12,6 +12,8 @@
 #include "interface/audio_engine_ts.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(TsHandle handle, const short* audio_in, int in_samples, const short* detection_in, const short* reference_in, float voice_probability, int key_pressed, short* audio_out);
+
 
 #define FRAME_LEN (160)   /* 10ms @ 16kHz */
 
@@ -64,7 +66,7 @@ static void test_normal_flow(const char* input_wav, const char* output_wav)
         if (read_samples == 0) break;
 
         /* Always pass FRAME_LEN — zero-padded for partial final frame */
-        ret = AudioEngine_Ts_Process(handle,
+        ret = CallProcess(handle,
                                      in_buf, FRAME_LEN,
                                      NULL,     /* detection: use audio itself */
                                      NULL,     /* no reference mic */
@@ -119,7 +121,7 @@ static void test_reset(const char* input_wav)
     for (int i = 0; i < 10; i++) {
         int read = wav_reader.ReadSamples(FRAME_LEN, in_buf);
         if (read == 0) break;
-        AudioEngine_Ts_Process(handle, in_buf, FRAME_LEN, NULL, NULL,
+        CallProcess(handle, in_buf, FRAME_LEN, NULL, NULL,
                                1.0f, 1 /* simulate key press */, out_buf);
     }
 
@@ -134,7 +136,7 @@ static void test_reset(const char* input_wav)
     /* Should still be able to process after reset */
     int read = wav_reader.ReadSamples(FRAME_LEN, in_buf);
     if (read > 0) {
-        ret = AudioEngine_Ts_Process(handle, in_buf, FRAME_LEN, NULL, NULL,
+        ret = CallProcess(handle, in_buf, FRAME_LEN, NULL, NULL,
                                      1.0f, 0, out_buf);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: Process after Reset returned " << ret << std::endl;
@@ -173,7 +175,7 @@ static void test_error_cases(void)
         return;
     }
     int16_t buf[FRAME_LEN] = {0};
-    ret = AudioEngine_Ts_Process(handle, buf, FRAME_LEN, NULL, NULL, 1.0f, 0, buf);
+    ret = CallProcess(handle, buf, FRAME_LEN, NULL, NULL, 1.0f, 0, buf);
     std::cout << "  Process without Init = " << ret
               << (ret == AUDIO_ENGINE_ERR_NOT_INITIALIZED ? " OK" : " FAIL") << std::endl;
 
@@ -191,26 +193,26 @@ static void test_error_cases(void)
         return;
     }
 
-    ret = AudioEngine_Ts_Process(handle, NULL, FRAME_LEN, NULL, NULL, 1.0f, 0, buf);
+    ret = CallProcess(handle, NULL, FRAME_LEN, NULL, NULL, 1.0f, 0, buf);
     std::cout << "  Process(NULL audio_in) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL audio_out */
-    ret = AudioEngine_Ts_Process(handle, buf, FRAME_LEN, NULL, NULL, 1.0f, 0, NULL);
+    ret = CallProcess(handle, buf, FRAME_LEN, NULL, NULL, 1.0f, 0, NULL);
     std::cout << "  Process(NULL audio_out) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* Invalid frame length */
-    ret = AudioEngine_Ts_Process(handle, buf, 999, NULL, NULL, 1.0f, 0, buf);
+    ret = CallProcess(handle, buf, 999, NULL, NULL, 1.0f, 0, buf);
     std::cout << "  Process(wrong frame_len) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
     /* Invalid voice_probability */
-    ret = AudioEngine_Ts_Process(handle, buf, FRAME_LEN, NULL, NULL, 1.5f, 0, buf);
+    ret = CallProcess(handle, buf, FRAME_LEN, NULL, NULL, 1.5f, 0, buf);
     std::cout << "  Process(voice_prob=1.5) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
-    ret = AudioEngine_Ts_Process(handle, buf, FRAME_LEN, NULL, NULL, -0.5f, 0, buf);
+    ret = CallProcess(handle, buf, FRAME_LEN, NULL, NULL, -0.5f, 0, buf);
     std::cout << "  Process(voice_prob=-0.5) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
@@ -242,6 +244,20 @@ static void test_error_cases(void)
     std::cout << "  PASS" << std::endl;
 }
 
+
+static int CallProcess(TsHandle handle, const short* audio_in, int in_samples,
+                       const short* detection_in, const short* reference_in,
+                       float voice_probability, int key_pressed,
+                       short* audio_out)
+{
+    if (!audio_out) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    TsInput_t input{audio_in, in_samples, detection_in, reference_in,
+                    voice_probability, key_pressed};
+    TsResult_t result{audio_out};
+    return AudioEngine_Ts_Process(handle, &input, &result);
+}
 
 int main(int argc, char** argv)
 {

@@ -13,6 +13,8 @@
 #include "interface/audio_engine_kws.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(KwsHandle handle, const short* audio_in, int samples, int* kws_index, float* kws_score);
+
 #define FRAME_LEN (160)  /* 10 ms @ 16 kHz */
 
 namespace {
@@ -108,7 +110,7 @@ bool RunWav(KwsHandle handle, const char* path, Detection* first,
         int index = -1;
         float score = 0.0f;
         const int ret =
-            AudioEngine_Kws_Process(handle, frame, FRAME_LEN, &index, &score);
+            CallProcess(handle, frame, FRAME_LEN, &index, &score);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: Process returned " << ret << " at frame "
                       << frame_index << std::endl;
@@ -246,7 +248,7 @@ void TestSilence()
     for (int i = 0; i < 300; ++i) {  /* 3 seconds */
         int index = -1;
         float score = 0.0f;
-        if (AudioEngine_Kws_Process(handle, silence, FRAME_LEN, &index,
+        if (CallProcess(handle, silence, FRAME_LEN, &index,
                                     &score) != AUDIO_ENGINE_SUCCESS) {
             Check(false, "silence processing failed");
             break;
@@ -274,7 +276,7 @@ void TestErrorCases()
     int index = -1;
     float score = 0.0f;
     int16_t frame[FRAME_LEN] = {0};
-    Check(AudioEngine_Kws_Process(handle, frame, FRAME_LEN, &index, &score) ==
+    Check(CallProcess(handle, frame, FRAME_LEN, &index, &score) ==
               AUDIO_ENGINE_ERR_NOT_INITIALIZED,
           "Process before Init");
 
@@ -317,12 +319,12 @@ void TestErrorCases()
     Check(AudioEngine_Kws_SetParam(handle, &rt) == AUDIO_ENGINE_SUCCESS,
           "SetParam(0.5)");
 
-    Check(AudioEngine_Kws_Process(handle, frame, FRAME_LEN, &index, NULL) ==
+    Check(CallProcess(handle, frame, FRAME_LEN, &index, NULL) ==
               AUDIO_ENGINE_ERR_NULL_POINTER,
           "NULL kws_score is rejected");
 
     Check(AudioEngine_Kws_Deinit(handle) == AUDIO_ENGINE_SUCCESS, "Deinit");
-    Check(AudioEngine_Kws_Process(handle, frame, FRAME_LEN, &index, &score) ==
+    Check(CallProcess(handle, frame, FRAME_LEN, &index, &score) ==
               AUDIO_ENGINE_ERR_NOT_INITIALIZED,
           "Process after Deinit");
 
@@ -330,6 +332,20 @@ void TestErrorCases()
 }
 
 }  // namespace
+
+static int CallProcess(KwsHandle handle, const short* audio_in, int samples,
+                       int* kws_index, float* kws_score)
+{
+    if (!kws_index || !kws_score) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    KwsInput_t input{audio_in, samples};
+    KwsResult_t result{-1, 0.0f};
+    const int ret = AudioEngine_Kws_Process(handle, &input, &result);
+    *kws_index = result.kws_index;
+    *kws_score = result.kws_score;
+    return ret;
+}
 
 int main(int argc, char** argv)
 {

@@ -196,26 +196,28 @@ AUDIO_ENGINE_API int AudioEngine_Resample_ResetParam(ResampleHandle handle, cons
  * ==========================================================================*/
 AUDIO_ENGINE_API int AudioEngine_Resample_Process(
     ResampleHandle handle,
-    const short* in,
-    int in_samples,
-    short* out,
-    int max_out_samples,
-    int* out_samples)
+    const ResampleInput_t* input,
+    ResampleResult_t* result)
 {
     if (!handle) {
         LOG_WARN("AudioEngine_Resample_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Resample_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* in = input->audio_in;
+    const int in_samples = input->in_samples;
+    short* out = result->audio_out;
+    const int max_out_samples = result->max_out_samples;
+    int* out_samples = &result->out_samples;
     if (!in) {
         LOG_WARN("AudioEngine_Resample_Process: in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
     if (!out) {
         LOG_WARN("AudioEngine_Resample_Process: out is NULL");
-        return AUDIO_ENGINE_ERR_NULL_POINTER;
-    }
-    if (!out_samples) {
-        LOG_WARN("AudioEngine_Resample_Process: out_samples is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
     if (in_samples <= 0) {

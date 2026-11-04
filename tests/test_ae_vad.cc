@@ -15,6 +15,8 @@
 #include "interface/audio_engine_vad.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(VadHandle handle, const short* audio_in, int samples, int* vad_flag);
+
 #ifdef AE_WITH_MNN
 #include "core/voice_activity_detection/silero_vad.h"
 #include "core/voice_activity_detection/vad_decision_filter.h"
@@ -87,7 +89,7 @@ static void test_normal_flow(const char* input_wav, const char* output_wav)
 
         int vad_flag = 0;
         /* Always pass FRAME_LEN — zero-padded for partial final frame */
-        ret = AudioEngine_Vad_Process(handle, in_buf, FRAME_LEN, &vad_flag);
+        ret = CallProcess(handle, in_buf, FRAME_LEN, &vad_flag);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: AudioEngine_Vad_Process returned " << ret
                       << " at frame " << total_frames << std::endl;
@@ -135,7 +137,7 @@ static void test_reset(const char* input_wav)
     for (int i = 0; i < 10; i++) {
         int read = wav_reader.ReadSamples(FRAME_LEN, buf);
         if (read == 0) break;
-        AudioEngine_Vad_Process(handle, buf, read, &vad_flag);
+        CallProcess(handle, buf, read, &vad_flag);
     }
 
     /* Reset */
@@ -149,7 +151,7 @@ static void test_reset(const char* input_wav)
     /* Should still be able to process after reset */
     int read = wav_reader.ReadSamples(FRAME_LEN, buf);
     if (read > 0) {
-        ret = AudioEngine_Vad_Process(handle, buf, read, &vad_flag);
+        ret = CallProcess(handle, buf, read, &vad_flag);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: Process after Reset returned " << ret << std::endl;
         } else {
@@ -181,7 +183,7 @@ static void test_error_cases(void)
     VadHandle handle = AudioEngine_Vad_Create();
     int vad_flag;
     int16_t buf[FRAME_LEN] = {0};
-    ret = AudioEngine_Vad_Process(handle, buf, FRAME_LEN, &vad_flag);
+    ret = CallProcess(handle, buf, FRAME_LEN, &vad_flag);
     std::cout << "  Process without Init = " << ret
               << (ret == AUDIO_ENGINE_ERR_NOT_INITIALIZED ? " OK" : " FAIL") << std::endl;
 
@@ -191,12 +193,12 @@ static void test_error_cases(void)
     init_cfg.frame_len = FRAME_LEN;
     init_cfg.vad_mode = 0;
     AudioEngine_Vad_Init(handle, &init_cfg);
-    ret = AudioEngine_Vad_Process(handle, NULL, FRAME_LEN, &vad_flag);
+    ret = CallProcess(handle, NULL, FRAME_LEN, &vad_flag);
     std::cout << "  Process(NULL audio_in) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* Invalid samples (wrong frame length) */
-    ret = AudioEngine_Vad_Process(handle, buf, 999, &vad_flag);
+    ret = CallProcess(handle, buf, 999, &vad_flag);
     std::cout << "  Process(wrong samples) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
@@ -279,7 +281,7 @@ static bool process_silero_frame(VadHandle handle, const int16_t* frame,
                                  soundproof::VadDecisionFilter* reference_filter,
                                  int* flag)
 {
-    if (AudioEngine_Vad_Process(handle, frame, FRAME_LEN, flag) !=
+    if (CallProcess(handle, frame, FRAME_LEN, flag) !=
         AUDIO_ENGINE_SUCCESS) {
         return false;
     }
@@ -540,14 +542,14 @@ static void test_silero_errors(void)
 
     int16_t frame[FRAME_LEN] = {0};
     int flag = 0;
-    check_silero(AudioEngine_Vad_Process(handle, frame, FRAME_LEN, &flag) ==
+    check_silero(CallProcess(handle, frame, FRAME_LEN, &flag) ==
                      AUDIO_ENGINE_ERR_NOT_INITIALIZED,
                  "Process rejected after failed Init");
 
     check_silero(init_silero(handle) == AUDIO_ENGINE_SUCCESS,
                  "Init after failed attempts");
     check_silero(AudioEngine_Vad_Deinit(handle) == AUDIO_ENGINE_SUCCESS, "Deinit");
-    check_silero(AudioEngine_Vad_Process(handle, frame, FRAME_LEN, &flag) ==
+    check_silero(CallProcess(handle, frame, FRAME_LEN, &flag) ==
                      AUDIO_ENGINE_ERR_NOT_INITIALIZED,
                  "Process rejected after Deinit");
 
@@ -555,6 +557,19 @@ static void test_silero_errors(void)
 }
 #endif  /* AE_WITH_MNN */
 
+
+static int CallProcess(VadHandle handle, const short* audio_in, int samples,
+                       int* vad_flag)
+{
+    if (!vad_flag) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    VadInput_t input{audio_in, samples};
+    VadResult_t result{0};
+    const int ret = AudioEngine_Vad_Process(handle, &input, &result);
+    *vad_flag = result.vad_flag;
+    return ret;
+}
 
 int main(int argc, char** argv)
 {

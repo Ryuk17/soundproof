@@ -349,22 +349,23 @@ AUDIO_ENGINE_API int AudioEngine_Vad_ResetParam(VadHandle handle, const VadRtCon
  * ==========================================================================*/
 AUDIO_ENGINE_API int AudioEngine_Vad_Process(
     VadHandle handle,
-    const short* audio_in,
-    int samples,
-    int *vad_flag)
+    const VadInput_t* input,
+    VadResult_t* result)
 {
-    LOG_DEBUG("AudioEngine_Vad_Process, handle=%p, samples=%d", (void*)handle, samples);
-
     if (!handle) {
         LOG_WARN("AudioEngine_Vad_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
-    if (!audio_in) {
-        LOG_WARN("AudioEngine_Vad_Process: audio_in is NULL");
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Vad_Process: input/result is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
-    if (!vad_flag) {
-        LOG_WARN("AudioEngine_Vad_Process: vad_flag is NULL");
+    const short* audio_in = input->audio_in;
+    const int samples = input->samples;
+    int* vad_flag = &result->vad_flag;
+    LOG_DEBUG("AudioEngine_Vad_Process, handle=%p, samples=%d", (void*)handle, samples);
+    if (!audio_in) {
+        LOG_WARN("AudioEngine_Vad_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
 

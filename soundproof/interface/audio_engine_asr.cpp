@@ -255,21 +255,26 @@ AUDIO_ENGINE_API int AudioEngine_Asr_ResetParam(AsrHandle handle,
  * ==========================================================================*/
 AUDIO_ENGINE_API int AudioEngine_Asr_Process(
     AsrHandle handle,
-    const short* audio_in,
-    int samples,
-    char* text,
-    int text_capacity,
-    int* text_len,
-    int* is_final)
+    const AsrInput_t* input,
+    AsrResult_t* result)
 {
-    LOG_DEBUG("AudioEngine_Asr_Process, handle=%p, samples=%d",
-              (void*)handle, samples);
-
     if (!handle) {
         LOG_WARN("AudioEngine_Asr_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
-    if (!audio_in || !text || !text_len || !is_final || text_capacity <= 0) {
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Asr_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int samples = input->samples;
+    char* text = result->text;
+    const int text_capacity = result->text_capacity;
+    int* text_len = &result->text_len;
+    int* is_final = &result->is_final;
+    LOG_DEBUG("AudioEngine_Asr_Process, handle=%p, samples=%d",
+              (void*)handle, samples);
+    if (!audio_in || !text || text_capacity <= 0) {
         LOG_WARN("AudioEngine_Asr_Process: NULL pointer or empty text buffer");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
@@ -287,24 +292,24 @@ AUDIO_ENGINE_API int AudioEngine_Asr_Process(
         return AUDIO_ENGINE_ERR_INVALID_PARAM;
     }
 
-    soundproof::AsrRecognizerResult result;
+    soundproof::AsrRecognizerResult core_result;
     if (!ptr->recognizer_->Process(audio_in, static_cast<size_t>(samples),
-                                   &result)) {
+                                   &core_result)) {
         LOG_ERROR("AudioEngine_Asr_Process: recognizer failed");
         return AUDIO_ENGINE_ERR_PROCESS_FAILED;
     }
 
-    const int required = static_cast<int>(result.text.size()) + 1;
+    const int required = static_cast<int>(core_result.text.size()) + 1;
     if (required > text_capacity) {
         *text_len = required;
         LOG_WARN("AudioEngine_Asr_Process: text buffer too small (%d < %d)",
                  text_capacity, required);
         return AUDIO_ENGINE_ERR_INVALID_PARAM;
     }
-    std::memcpy(text, result.text.c_str(), result.text.size());
-    text[result.text.size()] = '\0';
+    std::memcpy(text, core_result.text.c_str(), core_result.text.size());
+    text[core_result.text.size()] = '\0';
     *text_len = required;
-    *is_final = result.is_final ? 1 : 0;
+    *is_final = core_result.is_final ? 1 : 0;
     return AUDIO_ENGINE_SUCCESS;
 }
 

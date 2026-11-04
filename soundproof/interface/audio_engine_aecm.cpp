@@ -182,25 +182,31 @@ extern "C" int AudioEngine_Aecm_ResetParam(AecmHandle handle, const AecmRtConfig
  * ==========================================================================*/
 extern "C" int AudioEngine_Aecm_Process(
     AecmHandle handle,
-    const short* nearend_in,
-    const short* farend_in,
-    int in_samples,
-    short* audio_out,
-    int max_out_samples,
-    int* out_samples)
+    const AecmInput_t* input,
+    AecmResult_t* result)
 {
-    LOG_DEBUG("AudioEngine_Aecm_Process(handle=%p, nearend=%p, farend=%p, in_samples=%d, out=%p, max_out=%d, out_samples=%p)",
-              handle, nearend_in, farend_in, in_samples, audio_out, max_out_samples, out_samples);
     if (!handle) {
         LOG_WARN("AudioEngine_Aecm_Process: NULL handle");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Aecm_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* nearend_in = input->nearend_in;
+    const short* farend_in = input->farend_in;
+    const int in_samples = input->in_samples;
+    short* audio_out = result->audio_out;
+    const int max_out_samples = result->max_out_samples;
+    int* out_samples = &result->out_samples;
+    LOG_DEBUG("AudioEngine_Aecm_Process(handle=%p, nearend=%p, farend=%p, in_samples=%d, out=%p, max_out=%d)",
+              handle, nearend_in, farend_in, in_samples, audio_out, max_out_samples);
     AudioEngineAecm* ctx = static_cast<AudioEngineAecm*>(handle);
     if (!ctx->initialized_) {
         LOG_WARN("AudioEngine_Aecm_Process: not initialized");
         return AUDIO_ENGINE_ERR_NOT_INITIALIZED;
     }
-    if (!nearend_in || !farend_in || !audio_out || !out_samples) {
+    if (!nearend_in || !farend_in || !audio_out) {
         LOG_WARN("AudioEngine_Aecm_Process: NULL pointer");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }

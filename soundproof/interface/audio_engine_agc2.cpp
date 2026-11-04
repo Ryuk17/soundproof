@@ -263,24 +263,30 @@ extern "C" int AudioEngine_Agc2_ResetParam(Agc2Handle handle, const Agc2RtConfig
  * ==========================================================================*/
 extern "C" int AudioEngine_Agc2_Process(
     Agc2Handle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out,
-    int max_out_samples,
-    int* out_samples)
+    const Agc2Input_t* input,
+    Agc2Result_t* result)
 {
-    LOG_DEBUG("AudioEngine_Agc2_Process(handle=%p, in=%p, in_samples=%d, out=%p, max_out=%d, out_samples=%p)",
-              handle, audio_in, in_samples, audio_out, max_out_samples, out_samples);
     if (!handle) {
         LOG_WARN("AudioEngine_Agc2_Process: NULL handle");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Agc2_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int in_samples = input->in_samples;
+    short* audio_out = result->audio_out;
+    const int max_out_samples = result->max_out_samples;
+    int* out_samples = &result->out_samples;
+    LOG_DEBUG("AudioEngine_Agc2_Process(handle=%p, in=%p, in_samples=%d, out=%p, max_out=%d)",
+              handle, audio_in, in_samples, audio_out, max_out_samples);
     AudioEngineAgc2* ctx = static_cast<AudioEngineAgc2*>(handle);
     if (!ctx->initialized_) {
         LOG_WARN("AudioEngine_Agc2_Process: not initialized");
         return AUDIO_ENGINE_ERR_NOT_INITIALIZED;
     }
-    if (!audio_in || !audio_out || !out_samples) {
+    if (!audio_in || !audio_out) {
         LOG_WARN("AudioEngine_Agc2_Process: NULL pointer");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }

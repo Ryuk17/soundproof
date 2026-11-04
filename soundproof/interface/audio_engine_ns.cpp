@@ -251,26 +251,28 @@ AUDIO_ENGINE_API int AudioEngine_Ns_ResetParam(NsHandle handle, const NsRtConfig
  * ==========================================================================*/
 AUDIO_ENGINE_API int AudioEngine_Ns_Process(
     NsHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out,
-    int max_out_samples,
-    int* out_samples)
+    const NsInput_t* input,
+    NsResult_t* result)
 {
     if (!handle) {
         LOG_WARN("AudioEngine_Ns_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Ns_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int in_samples = input->in_samples;
+    short* audio_out = result->audio_out;
+    const int max_out_samples = result->max_out_samples;
+    int* out_samples = &result->out_samples;
     if (!audio_in) {
         LOG_WARN("AudioEngine_Ns_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
     if (!audio_out) {
         LOG_WARN("AudioEngine_Ns_Process: audio_out is NULL");
-        return AUDIO_ENGINE_ERR_NULL_POINTER;
-    }
-    if (!out_samples) {
-        LOG_WARN("AudioEngine_Ns_Process: out_samples is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
 

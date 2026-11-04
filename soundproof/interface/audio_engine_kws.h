@@ -51,12 +51,20 @@ AUDIO_ENGINE_API int AudioEngine_Kws_ResetParam(KwsHandle handle, const KwsRtCon
 
 /* kws_index: 0-based line index in keywords.txt on a trigger (-1 otherwise)
    kws_score: average posterior of the matched keyword tokens, range [0, 1] */
+typedef struct {
+    const short* audio_in;
+    int samples;
+} KwsInput_t;
+
+typedef struct {
+    int kws_index;       /* 0-based keyword index, -1 if none */
+    float kws_score;     /* trigger score */
+} KwsResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Kws_Process(
     KwsHandle handle,
-    const short* audio_in,
-    int samples,
-    int *kws_index, float *kws_score
-);
+    const KwsInput_t* input,
+    KwsResult_t* result);
 
 AUDIO_ENGINE_API int AudioEngine_Kws_Deinit(KwsHandle handle);
 

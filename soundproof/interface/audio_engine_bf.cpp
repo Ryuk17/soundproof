@@ -292,15 +292,20 @@ extern "C" int AudioEngine_Bf_ResetParam(BfHandle handle, const BfRtConfig* rt_c
  * ==========================================================================*/
 extern "C" int AudioEngine_Bf_Process(
     BfHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out,
-    int* is_target_present)
+    const BfInput_t* input,
+    BfResult_t* result)
 {
     if (!handle) {
         LOG_WARN("AudioEngine_Bf_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Bf_Process: input/result is NULL");
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    const short* audio_in = input->audio_in;
+    const int in_samples = input->in_samples;
+    short* audio_out = result->audio_out;
     if (!audio_in) {
         LOG_WARN("AudioEngine_Bf_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
@@ -349,10 +354,8 @@ extern "C" int AudioEngine_Bf_Process(
     /* 5. Convert float → short */
     FloatToS16(float_out.data(), num_frames, audio_out);
 
-    /* 6. Target presence (optional output) */
-    if (is_target_present) {
-        *is_target_present = ptr->bf_->is_target_present() ? 1 : 0;
-    }
+    /* 6. Target presence */
+    result->is_target_present = ptr->bf_->is_target_present() ? 1 : 0;
 
     return AUDIO_ENGINE_SUCCESS;
 }

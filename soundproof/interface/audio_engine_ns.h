@@ -41,14 +41,21 @@ AUDIO_ENGINE_API int AudioEngine_Ns_SetParam(NsHandle handle, const NsRtConfig* 
 
 AUDIO_ENGINE_API int AudioEngine_Ns_ResetParam(NsHandle handle, const NsRtConfig* rt_config);
 
+typedef struct {
+    const short* audio_in;
+    int in_samples;
+} NsInput_t;
+
+typedef struct {
+    short* audio_out;
+    int max_out_samples;
+    int out_samples;
+} NsResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Ns_Process(
     NsHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out,
-    int max_out_samples,
-    int* out_samples
-);
+    const NsInput_t* input,
+    NsResult_t* result);
 
 AUDIO_ENGINE_API int AudioEngine_Ns_Deinit(NsHandle handle);
 

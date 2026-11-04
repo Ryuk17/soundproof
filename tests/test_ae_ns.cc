@@ -13,6 +13,8 @@
 #include "interface/audio_engine_ns.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(NsHandle handle, const short* audio_in, int in_samples, short* audio_out, int max_out_samples, int* out_samples);
+
 
 #define FRAME_LEN (160)   /* 10ms @ 16kHz */
 
@@ -73,7 +75,7 @@ static void test_normal_flow(const char* input_wav, const char* output_wav)
         int read_samples = wav_reader.ReadSamples(FRAME_LEN, wav_data);
 
         int out_samples = 0;
-        ret = AudioEngine_Ns_Process(handle, wav_data, FRAME_LEN,
+        ret = CallProcess(handle, wav_data, FRAME_LEN,
                                      out_data, FRAME_LEN, &out_samples);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: AudioEngine_Ns_Process returned " << ret
@@ -129,7 +131,7 @@ static void test_reset(const char* input_wav)
     for (int i = 0; i < 10; i++) {
         int read = wav_reader.ReadSamples(FRAME_LEN, in_buf);
         if (read == 0) break;
-        AudioEngine_Ns_Process(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
+        CallProcess(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
     }
 
     /* Reset */
@@ -143,7 +145,7 @@ static void test_reset(const char* input_wav)
     /* Should still be able to process after reset */
     int read = wav_reader.ReadSamples(FRAME_LEN, in_buf);
     if (read > 0) {
-        ret = AudioEngine_Ns_Process(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
+        ret = CallProcess(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: Process after Reset returned " << ret << std::endl;
         } else {
@@ -176,34 +178,34 @@ static void test_error_cases(void)
     int16_t in_buf[FRAME_LEN] = {0};
     int16_t out_buf[FRAME_LEN] = {0};
     int out_samples = 0;
-    ret = AudioEngine_Ns_Process(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
+    ret = CallProcess(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
     std::cout << "  Process without Init = " << ret
               << (ret == AUDIO_ENGINE_ERR_NOT_INITIALIZED ? " OK" : " FAIL") << std::endl;
 
     /* NULL audio_in */
     NsInitConfig init_cfg = { 16000, 1, 1 };
     AudioEngine_Ns_Init(handle, &init_cfg);
-    ret = AudioEngine_Ns_Process(handle, NULL, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
+    ret = CallProcess(handle, NULL, FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
     std::cout << "  Process(NULL audio_in) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL audio_out */
-    ret = AudioEngine_Ns_Process(handle, in_buf, FRAME_LEN, NULL, FRAME_LEN, &out_samples);
+    ret = CallProcess(handle, in_buf, FRAME_LEN, NULL, FRAME_LEN, &out_samples);
     std::cout << "  Process(NULL audio_out) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL out_samples */
-    ret = AudioEngine_Ns_Process(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, NULL);
+    ret = CallProcess(handle, in_buf, FRAME_LEN, out_buf, FRAME_LEN, NULL);
     std::cout << "  Process(NULL out_samples) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* Invalid in_samples (not 10ms frame) */
-    ret = AudioEngine_Ns_Process(handle, in_buf, 999, out_buf, FRAME_LEN, &out_samples);
+    ret = CallProcess(handle, in_buf, 999, out_buf, FRAME_LEN, &out_samples);
     std::cout << "  Process(in_samples=999) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
     /* max_out_samples too small */
-    ret = AudioEngine_Ns_Process(handle, in_buf, FRAME_LEN, out_buf, 100, &out_samples);
+    ret = CallProcess(handle, in_buf, FRAME_LEN, out_buf, 100, &out_samples);
     std::cout << "  Process(max_out=100) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
@@ -246,6 +248,20 @@ static void test_error_cases(void)
     std::cout << "  PASS" << std::endl;
 }
 
+
+static int CallProcess(NsHandle handle, const short* audio_in, int in_samples,
+                       short* audio_out, int max_out_samples,
+                       int* out_samples)
+{
+    if (!audio_out || !out_samples) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    NsInput_t input{audio_in, in_samples};
+    NsResult_t result{audio_out, max_out_samples, 0};
+    const int ret = AudioEngine_Ns_Process(handle, &input, &result);
+    *out_samples = result.out_samples;
+    return ret;
+}
 
 int main(int argc, char** argv)
 {

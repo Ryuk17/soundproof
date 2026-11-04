@@ -13,6 +13,8 @@
 #include "interface/audio_engine_aec.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(AecHandle handle, const short* nearend_in, const short* farend_in, int in_samples, short* audio_out, int max_out_samples, int* out_samples);
+
 
 #define FRAME_LEN (160)   /* 10ms @ 16kHz */
 
@@ -80,7 +82,7 @@ static void test_normal_flow(const char* nearend_wav, const char* farend_wav,
         }
 
         int out_samples = 0;
-        ret = AudioEngine_Aec_Process(handle, nearend_data, farend_data,
+        ret = CallProcess(handle, nearend_data, farend_data,
                                       FRAME_LEN, output, FRAME_LEN, &out_samples);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: AudioEngine_Aec_Process returned " << ret
@@ -135,7 +137,7 @@ static void test_reset(const char* nearend_wav, const char* farend_wav)
         int read = farend_reader.ReadSamples(FRAME_LEN, farend_buf);
         if (read == 0) break;
         nearend_reader.ReadSamples(FRAME_LEN, nearend_buf);
-        AudioEngine_Aec_Process(handle, nearend_buf, farend_buf,
+        CallProcess(handle, nearend_buf, farend_buf,
                                 FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
     }
 
@@ -151,7 +153,7 @@ static void test_reset(const char* nearend_wav, const char* farend_wav)
     int read = farend_reader.ReadSamples(FRAME_LEN, farend_buf);
     if (read > 0) {
         nearend_reader.ReadSamples(FRAME_LEN, nearend_buf);
-        ret = AudioEngine_Aec_Process(handle, nearend_buf, farend_buf,
+        ret = CallProcess(handle, nearend_buf, farend_buf,
                                       FRAME_LEN, out_buf, FRAME_LEN, &out_samples);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: Process after Reset returned " << ret << std::endl;
@@ -185,7 +187,7 @@ static void test_error_cases(void)
     int16_t in_buf[FRAME_LEN] = {0};
     int16_t out_buf[FRAME_LEN] = {0};
     int out_samples = 0;
-    ret = AudioEngine_Aec_Process(handle, in_buf, in_buf, FRAME_LEN,
+    ret = CallProcess(handle, in_buf, in_buf, FRAME_LEN,
                                   out_buf, FRAME_LEN, &out_samples);
     std::cout << "  Process without Init = " << ret
               << (ret == AUDIO_ENGINE_ERR_NOT_INITIALIZED ? " OK" : " FAIL") << std::endl;
@@ -193,37 +195,37 @@ static void test_error_cases(void)
     /* NULL nearend_in */
     AecInitConfig init_cfg = { 16000, 1, 1 };
     AudioEngine_Aec_Init(handle, &init_cfg);
-    ret = AudioEngine_Aec_Process(handle, NULL, in_buf, FRAME_LEN,
+    ret = CallProcess(handle, NULL, in_buf, FRAME_LEN,
                                   out_buf, FRAME_LEN, &out_samples);
     std::cout << "  Process(NULL nearend_in) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL farend_in */
-    ret = AudioEngine_Aec_Process(handle, in_buf, NULL, FRAME_LEN,
+    ret = CallProcess(handle, in_buf, NULL, FRAME_LEN,
                                   out_buf, FRAME_LEN, &out_samples);
     std::cout << "  Process(NULL farend_in) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL audio_out */
-    ret = AudioEngine_Aec_Process(handle, in_buf, in_buf, FRAME_LEN,
+    ret = CallProcess(handle, in_buf, in_buf, FRAME_LEN,
                                   NULL, FRAME_LEN, &out_samples);
     std::cout << "  Process(NULL audio_out) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL out_samples */
-    ret = AudioEngine_Aec_Process(handle, in_buf, in_buf, FRAME_LEN,
+    ret = CallProcess(handle, in_buf, in_buf, FRAME_LEN,
                                   out_buf, FRAME_LEN, NULL);
     std::cout << "  Process(NULL out_samples) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* Invalid in_samples (not 10ms frame) */
-    ret = AudioEngine_Aec_Process(handle, in_buf, in_buf, 100,
+    ret = CallProcess(handle, in_buf, in_buf, 100,
                                   out_buf, FRAME_LEN, &out_samples);
     std::cout << "  Process(in_samples=100) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
     /* max_out_samples too small */
-    ret = AudioEngine_Aec_Process(handle, in_buf, in_buf, FRAME_LEN,
+    ret = CallProcess(handle, in_buf, in_buf, FRAME_LEN,
                                   out_buf, 100, &out_samples);
     std::cout << "  Process(max_out=100) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
@@ -304,6 +306,21 @@ static void test_error_cases(void)
     std::cout << "  PASS" << std::endl;
 }
 
+
+static int CallProcess(AecHandle handle, const short* nearend_in,
+                       const short* farend_in, int in_samples,
+                       short* audio_out, int max_out_samples,
+                       int* out_samples)
+{
+    if (!audio_out || !out_samples) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    AecInput_t input{nearend_in, farend_in, in_samples};
+    AecResult_t result{audio_out, max_out_samples, 0};
+    const int ret = AudioEngine_Aec_Process(handle, &input, &result);
+    *out_samples = result.out_samples;
+    return ret;
+}
 
 int main(int argc, char** argv)
 {

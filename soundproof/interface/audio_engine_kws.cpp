@@ -256,22 +256,24 @@ AUDIO_ENGINE_API int AudioEngine_Kws_ResetParam(KwsHandle handle,
  * ==========================================================================*/
 AUDIO_ENGINE_API int AudioEngine_Kws_Process(
     KwsHandle handle,
-    const short* audio_in,
-    int samples,
-    int *kws_index, float *kws_score)
+    const KwsInput_t* input,
+    KwsResult_t* result)
 {
-    LOG_DEBUG("AudioEngine_Kws_Process, handle=%p, samples=%d", (void*)handle, samples);
-
     if (!handle) {
         LOG_WARN("AudioEngine_Kws_Process: invalid handle (NULL)");
         return AUDIO_ENGINE_ERR_INVALID_HANDLE;
     }
-    if (!audio_in) {
-        LOG_WARN("AudioEngine_Kws_Process: audio_in is NULL");
+    if (!input || !result) {
+        LOG_WARN("AudioEngine_Kws_Process: input/result is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
-    if (!kws_index || !kws_score) {
-        LOG_WARN("AudioEngine_Kws_Process: kws_index/kws_score is NULL");
+    const short* audio_in = input->audio_in;
+    const int samples = input->samples;
+    int* kws_index = &result->kws_index;
+    float* kws_score = &result->kws_score;
+    LOG_DEBUG("AudioEngine_Kws_Process, handle=%p, samples=%d", (void*)handle, samples);
+    if (!audio_in) {
+        LOG_WARN("AudioEngine_Kws_Process: audio_in is NULL");
         return AUDIO_ENGINE_ERR_NULL_POINTER;
     }
 

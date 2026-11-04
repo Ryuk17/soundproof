@@ -18,6 +18,8 @@
 #include "interface/audio_engine_asr.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(AsrHandle handle, const short* audio_in, int samples, char* text, int text_capacity, int* text_len, int* is_final);
+
 #define FRAME_LEN (160)  /* 10 ms @ 16 kHz */
 
 namespace {
@@ -141,7 +143,7 @@ RunResult RunAudio(AsrHandle handle, const std::vector<int16_t>& samples,
 
         int text_len = 0;
         int is_final = 0;
-        const int ret = AudioEngine_Asr_Process(handle, frame, FRAME_LEN, text,
+        const int ret = CallProcess(handle, frame, FRAME_LEN, text,
                                                 sizeof(text), &text_len,
                                                 &is_final);
         if (ret != AUDIO_ENGINE_SUCCESS) {
@@ -244,7 +246,7 @@ void TestErrorCases()
     char text[64] = {0};
     int text_len = 0;
     int is_final = 0;
-    Check(AudioEngine_Asr_Process(handle, frame, FRAME_LEN, text, sizeof(text),
+    Check(CallProcess(handle, frame, FRAME_LEN, text, sizeof(text),
                                   &text_len, &is_final) ==
               AUDIO_ENGINE_ERR_NOT_INITIALIZED,
           "Process before Init");
@@ -303,7 +305,7 @@ void TestErrorCases()
         for (size_t pos = 0; pos + FRAME_LEN <= samples.size(); pos += FRAME_LEN) {
             int len = 0;
             int final = 0;
-            const int ret = AudioEngine_Asr_Process(
+            const int ret = CallProcess(
                 handle, samples.data() + pos, FRAME_LEN, small, sizeof(small),
                 &len, &final);
             if (ret == AUDIO_ENGINE_ERR_INVALID_PARAM && len > (int)sizeof(small)) {
@@ -315,7 +317,7 @@ void TestErrorCases()
     }
 
     Check(AudioEngine_Asr_Deinit(handle) == AUDIO_ENGINE_SUCCESS, "Deinit");
-    Check(AudioEngine_Asr_Process(handle, frame, FRAME_LEN, text, sizeof(text),
+    Check(CallProcess(handle, frame, FRAME_LEN, text, sizeof(text),
                                   &text_len, &is_final) ==
               AUDIO_ENGINE_ERR_NOT_INITIALIZED,
           "Process after Deinit");
@@ -446,6 +448,21 @@ void TestParaformerBackendIfAvailable()
 }
 
 }  // namespace
+
+static int CallProcess(AsrHandle handle, const short* audio_in, int samples,
+                       char* text, int text_capacity, int* text_len,
+                       int* is_final)
+{
+    if (!text || !text_len || !is_final) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    AsrInput_t input{audio_in, samples};
+    AsrResult_t result{text, text_capacity, 0, 0};
+    const int ret = AudioEngine_Asr_Process(handle, &input, &result);
+    *text_len = result.text_len;
+    *is_final = result.is_final;
+    return ret;
+}
 
 int main(int argc, char** argv)
 {

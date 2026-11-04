@@ -55,15 +55,22 @@ AUDIO_ENGINE_API int AudioEngine_Asr_ResetParam(AsrHandle handle, const AsrRtCon
    segment text and the recognizer has been reset for the next segment.
    If text_capacity is too small, *text_len is set to the required size
    (including the NUL) and AUDIO_ENGINE_ERR_INVALID_PARAM is returned. */
+typedef struct {
+    const short* audio_in;
+    int samples;
+} AsrInput_t;
+
+typedef struct {
+    char* text;          /* UTF-8 output buffer, NUL terminated */
+    int text_capacity;   /* input: buffer size in bytes */
+    int text_len;        /* output: bytes including the trailing NUL */
+    int is_final;        /* output: 1 if an endpoint was reached */
+} AsrResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Asr_Process(
     AsrHandle handle,
-    const short* audio_in,
-    int samples,
-    char* text,
-    int text_capacity,
-    int* text_len,
-    int* is_final
-);
+    const AsrInput_t* input,
+    AsrResult_t* result);
 
 AUDIO_ENGINE_API int AudioEngine_Asr_Deinit(AsrHandle handle);
 

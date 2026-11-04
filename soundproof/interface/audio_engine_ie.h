@@ -61,6 +61,15 @@ AUDIO_ENGINE_API int AudioEngine_Ie_SetNoiseEstimate(
     const float* noise_spectrum,
     int num_freqs);
 
+typedef struct {
+    const short* audio_in;  /* interleaved N-channel render PCM */
+    int in_samples;         /* samples per channel */
+} IeInput_t;
+
+typedef struct {
+    short* audio_out;       /* interleaved N-channel enhanced PCM */
+} IeResult_t;
+
 /** Process one frame of render audio.
  *
  *  @param handle     IE handle (must be initialized)
@@ -74,9 +83,8 @@ AUDIO_ENGINE_API int AudioEngine_Ie_SetNoiseEstimate(
  */
 AUDIO_ENGINE_API int AudioEngine_Ie_Process(
     IeHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out);
+    const IeInput_t* input,
+    IeResult_t* result);
 
 /** Deinitialize: free internal enhancer instance, keep handle alive. */
 AUDIO_ENGINE_API int AudioEngine_Ie_Deinit(IeHandle handle);

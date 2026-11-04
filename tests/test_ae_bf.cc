@@ -12,6 +12,8 @@
 #include "interface/audio_engine_bf.h"
 #include "utils/dr_wav.h"
 
+static int CallProcess(BfHandle handle, const short* audio_in, int in_samples, short* audio_out, int* is_target_present);
+
 
 #define FRAME_LEN (160)   /* 10ms @ 16kHz */
 
@@ -103,7 +105,7 @@ static void test_normal_flow(const char* input_wav, const char* output_wav)
         }
 
         int is_target = 0;
-        ret = AudioEngine_Bf_Process(handle, in_buf, FRAME_LEN, out_buf, &is_target);
+        ret = CallProcess(handle, in_buf, FRAME_LEN, out_buf, &is_target);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: AudioEngine_Bf_Process returned " << ret
                       << " at frame " << total_frames << std::endl;
@@ -183,7 +185,7 @@ static void test_reset(const char* input_wav)
                 }
             }
         }
-        AudioEngine_Bf_Process(handle, in_buf, read, out_buf, &is_target);
+        CallProcess(handle, in_buf, read, out_buf, &is_target);
     }
 
     /* Reset */
@@ -206,7 +208,7 @@ static void test_reset(const char* input_wav)
                 }
             }
         }
-        ret = AudioEngine_Bf_Process(handle, in_buf, read2, out_buf, &is_target);
+        ret = CallProcess(handle, in_buf, read2, out_buf, &is_target);
         if (ret != AUDIO_ENGINE_SUCCESS) {
             std::cerr << "  FAIL: Process after Reset returned " << ret << std::endl;
         } else {
@@ -247,7 +249,7 @@ static void test_error_cases(void)
     int is_target;
     int16_t buf[FRAME_LEN]        = {0};
     int16_t in_buf[FRAME_LEN * 4] = {0};  /* 4 ch */
-    ret = AudioEngine_Bf_Process(handle, in_buf, FRAME_LEN, buf, &is_target);
+    ret = CallProcess(handle, in_buf, FRAME_LEN, buf, &is_target);
     std::cout << "  Process without Init = " << ret
               << (ret == AUDIO_ENGINE_ERR_NOT_INITIALIZED ? " OK" : " FAIL") << std::endl;
 
@@ -271,17 +273,17 @@ static void test_error_cases(void)
         return;
     }
 
-    ret = AudioEngine_Bf_Process(handle, NULL, FRAME_LEN, buf, &is_target);
+    ret = CallProcess(handle, NULL, FRAME_LEN, buf, &is_target);
     std::cout << "  Process(NULL audio_in) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* NULL audio_out */
-    ret = AudioEngine_Bf_Process(handle, in_buf, FRAME_LEN, NULL, &is_target);
+    ret = CallProcess(handle, in_buf, FRAME_LEN, NULL, &is_target);
     std::cout << "  Process(NULL audio_out) = " << ret
               << (ret == AUDIO_ENGINE_ERR_NULL_POINTER ? " OK" : " FAIL") << std::endl;
 
     /* Invalid frame length */
-    ret = AudioEngine_Bf_Process(handle, in_buf, 999, buf, &is_target);
+    ret = CallProcess(handle, in_buf, 999, buf, &is_target);
     std::cout << "  Process(wrong frame_len) = " << ret
               << (ret == AUDIO_ENGINE_ERR_INVALID_PARAM ? " OK" : " FAIL") << std::endl;
 
@@ -322,6 +324,21 @@ static void test_error_cases(void)
     std::cout << "  PASS" << std::endl;
 }
 
+
+static int CallProcess(BfHandle handle, const short* audio_in, int in_samples,
+                       short* audio_out, int* is_target_present)
+{
+    if (!audio_out) {
+        return AUDIO_ENGINE_ERR_NULL_POINTER;
+    }
+    BfInput_t input{audio_in, in_samples};
+    BfResult_t result{audio_out, 0};
+    const int ret = AudioEngine_Bf_Process(handle, &input, &result);
+    if (is_target_present) {
+        *is_target_present = result.is_target_present;
+    }
+    return ret;
+}
 
 int main(int argc, char** argv)
 {

@@ -59,15 +59,23 @@ AUDIO_ENGINE_API int AudioEngine_Ts_Init(TsHandle handle, const TsInitConfig* in
  *
  *  @return AUDIO_ENGINE_SUCCESS on success, error code otherwise.
  */
+typedef struct {
+    const short* audio_in;       /* interleaved multi-channel input PCM */
+    int in_samples;              /* samples per channel */
+    const short* detection_in;   /* mono detection signal, may be NULL */
+    const short* reference_in;   /* mono reference signal, may be NULL */
+    float voice_probability;     /* [0, 1] */
+    int key_pressed;             /* 1 if a key was pressed this frame */
+} TsInput_t;
+
+typedef struct {
+    short* audio_out;            /* interleaved multi-channel output PCM */
+} TsResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Ts_Process(
     TsHandle handle,
-    const short* audio_in,
-    int in_samples,
-    const short* detection_in,
-    const short* reference_in,
-    float voice_probability,
-    int key_pressed,
-    short* audio_out);
+    const TsInput_t* input,
+    TsResult_t* result);
 
 /** Deinitialize: free internal suppressor instance, keep handle alive. */
 AUDIO_ENGINE_API int AudioEngine_Ts_Deinit(TsHandle handle);

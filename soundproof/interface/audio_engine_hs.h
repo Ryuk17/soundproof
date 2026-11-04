@@ -43,6 +43,15 @@ AUDIO_ENGINE_API int AudioEngine_Hs_Destroy(HsHandle handle);
 /** Initialize the howling suppressor. Must be called before Process. */
 AUDIO_ENGINE_API int AudioEngine_Hs_Init(HsHandle handle, const HsInitConfig* init_config);
 
+typedef struct {
+    const short* audio_in;  /* single-channel input PCM */
+    int in_samples;         /* samples in this frame */
+} HsInput_t;
+
+typedef struct {
+    short* audio_out;       /* suppressed output PCM, >= in_samples elements */
+} HsResult_t;
+
 /** Process one frame of mono audio.
  *
  *  @param handle     HS handle (must be initialized)
@@ -55,9 +64,8 @@ AUDIO_ENGINE_API int AudioEngine_Hs_Init(HsHandle handle, const HsInitConfig* in
  */
 AUDIO_ENGINE_API int AudioEngine_Hs_Process(
     HsHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out);
+    const HsInput_t* input,
+    HsResult_t* result);
 
 /** Deinitialize: free internal howling state, keep handle alive. */
 AUDIO_ENGINE_API int AudioEngine_Hs_Deinit(HsHandle handle);

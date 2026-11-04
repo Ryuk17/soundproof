@@ -81,12 +81,20 @@ AUDIO_ENGINE_API int AudioEngine_Bf_ResetParam(BfHandle handle, const BfRtConfig
  *
  *  @return AUDIO_ENGINE_SUCCESS on success, error code otherwise.
  */
+typedef struct {
+    const short* audio_in;  /* interleaved multi-channel input PCM */
+    int in_samples;         /* samples per channel */
+} BfInput_t;
+
+typedef struct {
+    short* audio_out;       /* single-channel beamformed output PCM */
+    int is_target_present;  /* 1 if the target signal is detected */
+} BfResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Bf_Process(
     BfHandle handle,
-    const short* audio_in,
-    int in_samples,
-    short* audio_out,
-    int* is_target_present);
+    const BfInput_t* input,
+    BfResult_t* result);
 
 /** Deinitialize: free internal beamformer instance, keep handle alive. */
 AUDIO_ENGINE_API int AudioEngine_Bf_Deinit(BfHandle handle);

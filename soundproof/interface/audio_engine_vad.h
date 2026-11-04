@@ -59,12 +59,19 @@ AUDIO_ENGINE_API int AudioEngine_Vad_SetParam(VadHandle handle, const VadRtConfi
 
 AUDIO_ENGINE_API int AudioEngine_Vad_ResetParam(VadHandle handle, const VadRtConfig* rt_config);
 
+typedef struct {
+    const short* audio_in;
+    int samples;
+} VadInput_t;
+
+typedef struct {
+    int vad_flag;        /* 1 = speech, 0 = non-speech */
+} VadResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Vad_Process(
     VadHandle handle,
-    const short* audio_in,
-    int samples,
-    int *vad_flag
-);
+    const VadInput_t* input,
+    VadResult_t* result);
 
 AUDIO_ENGINE_API int AudioEngine_Vad_Deinit(VadHandle handle);
 

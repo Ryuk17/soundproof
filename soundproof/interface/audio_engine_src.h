@@ -41,14 +41,21 @@ AUDIO_ENGINE_API int AudioEngine_Resample_SetParam(ResampleHandle handle, const 
 
 AUDIO_ENGINE_API int AudioEngine_Resample_ResetParam(ResampleHandle handle, const ResampleRtConfig* rt_config);
 
+typedef struct {
+    const short* audio_in;
+    int in_samples;
+} ResampleInput_t;
+
+typedef struct {
+    short* audio_out;
+    int max_out_samples;
+    int out_samples;
+} ResampleResult_t;
+
 AUDIO_ENGINE_API int AudioEngine_Resample_Process(
     ResampleHandle handle,
-    const short* in,
-    int in_samples,
-    short* out,
-    int max_out_samples,
-    int* out_samples
-);
+    const ResampleInput_t* input,
+    ResampleResult_t* result);
 
 AUDIO_ENGINE_API int AudioEngine_Resample_Deinit(ResampleHandle handle);
 
