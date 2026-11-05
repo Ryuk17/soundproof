@@ -21,6 +21,16 @@ struct AsrResult {
   int32_t trailing_silence_frames = 0;
 };
 
+struct AsrLmConfig {
+  // 0 = greedy_search, 1 = modified_beam_search.
+  int decoding_method = 0;
+  int max_active_paths = 4;
+  std::string model_path;
+  float scale = 0.5f;
+  bool shallow_fusion = true;
+  int num_threads = 1;
+};
+
 struct AsrBackendConfig {
   // Empty means "detect from encoder metadata / paths".
   std::string model_type;
@@ -31,6 +41,7 @@ struct AsrBackendConfig {
   float blank_penalty = 0.0f;
   // Id of "<unk>" from tokens.txt, -1 if absent.
   int32_t unk_id = -1;
+  AsrLmConfig lm;
 };
 
 // A streaming ASR model backend. The recognizer front-end owns feature

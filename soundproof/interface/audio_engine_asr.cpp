@@ -112,12 +112,40 @@ AUDIO_ENGINE_API int AudioEngine_Asr_Init(AsrHandle handle,
         return AUDIO_ENGINE_ERR_INVALID_PARAM;
     }
 
+    if (init_config->decoding_method != 0 &&
+        init_config->decoding_method != 1) {
+        LOG_WARN("AudioEngine_Asr_Init: invalid decoding_method=%d (0/1)",
+                 init_config->decoding_method);
+        return AUDIO_ENGINE_ERR_INVALID_PARAM;
+    }
+    if (init_config->lm_scale < 0.0f) {
+        LOG_WARN("AudioEngine_Asr_Init: negative lm_scale=%.2f",
+                 init_config->lm_scale);
+        return AUDIO_ENGINE_ERR_INVALID_PARAM;
+    }
+
     const std::string encoder_path = PathFrom(init_config->encoder_path);
     const std::string decoder_path = PathFrom(init_config->decoder_path);
     const std::string joiner_path = PathFrom(init_config->joiner_path);
     const std::string tokens_path = PathFrom(init_config->tokens_path);
+    const std::string lm_path = PathFrom(init_config->lm_model_path);
+    const std::string punctuation_model_path =
+        PathFrom(init_config->punctuation_model_path);
+    const std::string punctuation_vocab_path =
+        PathFrom(init_config->punctuation_bpe_vocab_path);
     if (encoder_path.empty() || decoder_path.empty() || tokens_path.empty()) {
         LOG_WARN("AudioEngine_Asr_Init: encoder/decoder/tokens paths are required");
+        return AUDIO_ENGINE_ERR_INVALID_PARAM;
+    }
+    if (init_config->decoding_method == 0 && !lm_path.empty()) {
+        LOG_WARN("AudioEngine_Asr_Init: lm_model_path requires "
+                 "decoding_method=1 (modified_beam_search)");
+        return AUDIO_ENGINE_ERR_INVALID_PARAM;
+    }
+    if (init_config->enable_punctuation &&
+        (punctuation_model_path.empty() || punctuation_vocab_path.empty())) {
+        LOG_WARN("AudioEngine_Asr_Init: punctuation requires model and BPE "
+                 "vocab paths");
         return AUDIO_ENGINE_ERR_INVALID_PARAM;
     }
 
@@ -140,8 +168,23 @@ AUDIO_ENGINE_API int AudioEngine_Asr_Init(AsrHandle handle,
     config.backend.num_threads =
         init_config->num_threads > 0 ? init_config->num_threads : 1;
     config.backend.blank_penalty = ptr->rt_blank_penalty_;
+    config.backend.lm.decoding_method = init_config->decoding_method;
+    config.backend.lm.max_active_paths =
+        init_config->max_active_paths > 0 ? init_config->max_active_paths : 4;
+    config.backend.lm.model_path = lm_path;
+    config.backend.lm.scale =
+        init_config->lm_scale > 0.0f ? init_config->lm_scale : 0.5f;
+    config.backend.lm.shallow_fusion = init_config->lm_shallow_fusion != 0;
+    config.backend.lm.num_threads =
+        init_config->lm_num_threads > 0 ? init_config->lm_num_threads : 1;
     config.tokens_path = tokens_path;
     config.enable_endpoint = init_config->enable_endpoint != 0;
+    config.enable_punctuation = init_config->enable_punctuation != 0;
+    config.punctuate_partial = init_config->punctuate_partial != 0;
+    config.punctuation_model_path = punctuation_model_path;
+    config.punctuation_bpe_vocab_path = punctuation_vocab_path;
+    config.punctuation_num_threads =
+        init_config->num_threads > 0 ? init_config->num_threads : 1;
 
     ptr->recognizer_ = new (std::nothrow) soundproof::OnlineRecognizer();
     if (!ptr->recognizer_ || !ptr->recognizer_->Init(config)) {
@@ -153,9 +196,13 @@ AUDIO_ENGINE_API int AudioEngine_Asr_Init(AsrHandle handle,
 
     ptr->initialized_ = true;
     LOG_INFO("AudioEngine_Asr_Init OK, sample_rate=%d, frame_len=%d, "
-             "model_type='%s', endpoint=%d",
+             "model_type='%s', endpoint=%d, decoding_method=%d, "
+             "lm='%s', punctuation=%d",
              init_config->sample_rate, init_config->frame_len,
-             config.backend.model_type.c_str(), (int)config.enable_endpoint);
+             config.backend.model_type.c_str(),
+             (int)config.enable_endpoint, config.backend.lm.decoding_method,
+             config.backend.lm.model_path.c_str(),
+             (int)config.enable_punctuation);
     return AUDIO_ENGINE_SUCCESS;
 }
 

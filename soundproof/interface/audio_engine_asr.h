@@ -26,6 +26,26 @@ typedef struct {
                              (10ms); features are buffered internally           */
     int num_threads;      /* MNN inference threads, default 1                  */
     int enable_endpoint;  /* 0/1, default 1: split utterances on silence       */
+
+    /* Decoding: 0 = greedy_search (default), 1 = modified_beam_search.
+       Beam search is supported by transducer backends only. */
+    int decoding_method;
+    int max_active_paths; /* beam search width, default 4                      */
+
+    /* Online RNN LM for modified_beam_search. Leave the path empty to run
+       beam search without a language model. Greedy + non-empty path is
+       rejected. */
+    char lm_model_path[AUDIO_ENGINE_MAX_FILE_PATH_LEN];
+    float lm_scale;             /* default 0.5                                 */
+    int lm_shallow_fusion;      /* 1 = shallow fusion (default), 0 = rescore   */
+    int lm_num_threads;         /* default 1                                   */
+
+    /* Punctuation / casing post-processing of the ASR text. */
+    int enable_punctuation;     /* default 0                                   */
+    int punctuate_partial;      /* default 0: only final text is punctuated    */
+    char punctuation_model_path[AUDIO_ENGINE_MAX_FILE_PATH_LEN];
+    char punctuation_bpe_vocab_path[AUDIO_ENGINE_MAX_FILE_PATH_LEN];
+
     char model_type[32];  /* "", "zipformer", "zipformer2", "paraformer", ...
                              empty = auto-detect from paths / model metadata   */
     char encoder_path[AUDIO_ENGINE_MAX_FILE_PATH_LEN];

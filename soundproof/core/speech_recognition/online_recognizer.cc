@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "core/speech_recognition/online_punctuator.h"
 #include "utils/logging.h"
 
 namespace soundproof {
@@ -48,6 +49,28 @@ bool OnlineRecognizer::Init(const AsrRecognizerConfig& config) {
     backend_.reset();
     return false;
   }
+
+  if (config.enable_punctuation) {
+    if (config.punctuation_model_path.empty() ||
+        config.punctuation_bpe_vocab_path.empty()) {
+      RTC_LOG(LS_ERROR) << "OnlineRecognizer: punctuation requires model and "
+                           "BPE vocab paths";
+      backend_.reset();
+      return false;
+    }
+    OnlinePunctuatorConfig punctuator_config;
+    punctuator_config.model_path = config.punctuation_model_path;
+    punctuator_config.bpe_vocab_path = config.punctuation_bpe_vocab_path;
+    punctuator_config.num_threads = config.punctuation_num_threads;
+    punctuator_ = std::make_unique<OnlinePunctuator>();
+    if (!punctuator_->Init(punctuator_config)) {
+      RTC_LOG(LS_ERROR) << "OnlineRecognizer: failed to init punctuator";
+      punctuator_.reset();
+      backend_.reset();
+      return false;
+    }
+  }
+  punctuate_partial_ = config.punctuate_partial;
 
   enable_endpoint_ = config.enable_endpoint;
   start_frame_index_ = 0;
@@ -102,11 +125,14 @@ bool OnlineRecognizer::Process(const int16_t* audio_in, size_t samples,
         endpoint_.IsEndpoint(num_processed_frames_,
                              current_.trailing_silence_frames,
                              kFrameShiftSeconds)) {
-      const std::string text =
+      const std::string raw_text =
           backend_->TextFromTokens(current_.tokens, symbols_);
-      if (HasNonSpace(text)) {
+      if (HasNonSpace(raw_text)) {
         ++segment_;
       }
+      const std::string text =
+          punctuator_ ? punctuator_->AddPunctuationWithCase(raw_text)
+                      : raw_text;
 
       backend_->ResetSegment();
       start_frame_index_ += num_processed_frames_;
@@ -120,7 +146,11 @@ bool OnlineRecognizer::Process(const int16_t* audio_in, size_t samples,
     }
   }
 
-  result->text = backend_->TextFromTokens(current_.tokens, symbols_);
+  const std::string text =
+      backend_->TextFromTokens(current_.tokens, symbols_);
+  result->text = (punctuator_ && punctuate_partial_)
+                     ? punctuator_->AddPunctuationWithCase(text)
+                     : text;
   result->segment = segment_;
   return true;
 }

@@ -9,6 +9,8 @@
 
 namespace soundproof {
 
+class OnlineRnnLm;
+class TransducerBeamSearchDecoder;
 class TransducerDecoder;
 
 // Transducer backend (zipformer / zipformer2 / conformer / lstm /
@@ -38,6 +40,9 @@ class TransducerBackend : public AsrBackend {
  private:
   OnlineTransducerModel model_;
   std::unique_ptr<TransducerDecoder> decoder_;
+  std::unique_ptr<OnlineRnnLm> lm_;
+  std::unique_ptr<TransducerBeamSearchDecoder> beam_decoder_;
+  bool beam_mode_ = false;
   std::string model_type_;
 };
 

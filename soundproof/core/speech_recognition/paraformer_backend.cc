@@ -33,6 +33,11 @@ bool ParaformerBackend::Init(const AsrBackendConfig& config) {
         << "ParaformerBackend: encoder and decoder paths are required";
     return false;
   }
+  if (config.lm.decoding_method != 0 || !config.lm.model_path.empty()) {
+    RTC_LOG(LS_ERROR)
+        << "ParaformerBackend: beam search and LM are not supported";
+    return false;
+  }
   ParaformerModelConfig model_config;
   model_config.encoder_path = config.encoder_path;
   model_config.decoder_path = config.decoder_path;

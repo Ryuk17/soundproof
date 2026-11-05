@@ -5,6 +5,7 @@
 // assets/audio_short16.wav. Tests are skipped when the assets are missing.
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -13,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "core/speech_recognition/hypothesis.h"
 #include "core/speech_recognition/paraformer_utils.h"
 #include "utils/symbol_table.h"
 #include "interface/audio_engine_asr.h"
@@ -282,6 +284,33 @@ void TestErrorCases()
               AUDIO_ENGINE_ERR_INIT_FAILED,
           "unknown model type is rejected");
 
+    FillZipformerConfig(&config, "");
+    config.decoding_method = 2;
+    Check(AudioEngine_Asr_Init(handle, &config) ==
+              AUDIO_ENGINE_ERR_INVALID_PARAM,
+          "invalid decoding_method is rejected");
+
+    FillZipformerConfig(&config, "");
+    std::snprintf(config.lm_model_path, sizeof(config.lm_model_path), "%s",
+                  "models/asr/dummy-lm.mnn");
+    Check(AudioEngine_Asr_Init(handle, &config) ==
+              AUDIO_ENGINE_ERR_INVALID_PARAM,
+          "LM path with greedy search is rejected");
+
+    FillZipformerConfig(&config, "");
+    config.enable_punctuation = 1;
+    Check(AudioEngine_Asr_Init(handle, &config) ==
+              AUDIO_ENGINE_ERR_INVALID_PARAM,
+          "punctuation without model/vocab is rejected");
+
+    FillZipformerConfig(&config, "");
+    config.decoding_method = 1;
+    std::snprintf(config.lm_model_path, sizeof(config.lm_model_path), "%s",
+                  "models/asr/does_not_exist.mnn");
+    Check(AudioEngine_Asr_Init(handle, &config) ==
+              AUDIO_ENGINE_ERR_INIT_FAILED,
+          "missing LM model returns INIT_FAILED");
+
     Check(InitHandle(handle, ""), "Init with valid config after failures");
 
     AsrRtConfig rt = {};
@@ -325,6 +354,33 @@ void TestErrorCases()
     AudioEngine_Asr_Destroy(handle);
 }
 
+void TestHypotheses()
+{
+    std::cout << "=== test_hypotheses ===" << std::endl;
+
+    soundproof::Hypothesis h1;
+    h1.ys = {-1, 0, 5};
+    h1.log_prob = -1.0;
+    soundproof::Hypotheses hyps;
+    hyps.Add(h1);
+
+    soundproof::Hypothesis h2 = h1;
+    h2.log_prob = -2.0;
+    hyps.Add(h2);
+    Check(hyps.Size() == 1, "same token sequence is merged");
+    const soundproof::Hypothesis merged = hyps.GetMostProbable(false);
+    const double expected = std::log(std::exp(-1.0) + std::exp(-2.0));
+    Check(std::abs(merged.log_prob - expected) < 1e-6,
+          "merged log prob uses log-sum-exp");
+
+    h2.ys = {-1, 0, 6};
+    h2.log_prob = -0.5;
+    hyps.Add(h2);
+    Check(hyps.Size() == 2, "different token sequences stay separate");
+    Check(hyps.GetMostProbable(false).ys.back() == 6,
+          "most probable hypothesis selected");
+}
+
 void TestParaformerUtils()
 {
     std::cout << "=== test_paraformer_utils ===" << std::endl;
@@ -364,6 +420,121 @@ void TestParaformerUtils()
     Check(text.find("abcd") != std::string::npos &&
               text.find("中文") != std::string::npos,
           "@@ merge and CJK text");
+}
+
+std::string FindFileWithKey(const std::string& root,
+                            const std::vector<std::string>& keys,
+                            bool require_mnn)
+{
+    namespace fs = std::filesystem;
+    if (!fs::exists(root)) {
+        return {};
+    }
+    for (const auto& entry : fs::recursive_directory_iterator(root)) {
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        if (require_mnn && entry.path().extension() != ".mnn") {
+            continue;
+        }
+        std::string name = entry.path().filename().string();
+        std::transform(name.begin(), name.end(), name.begin(),
+                       [](unsigned char c) {
+                           return static_cast<char>(std::tolower(c));
+                       });
+        for (const std::string& key : keys) {
+            if (name.find(key) != std::string::npos) {
+                return entry.path().string();
+            }
+        }
+    }
+    return {};
+}
+
+void TestLmIfAvailable()
+{
+    std::cout << "=== test_lm ===" << std::endl;
+
+    const std::string lm_path =
+        FindFileWithKey("models/asr", {"lm", "rnn"}, true);
+    if (lm_path.empty()) {
+        std::cout << "  SKIP: no LM model under models/asr" << std::endl;
+        return;
+    }
+
+    std::vector<int16_t> samples;
+    if (!LoadWav(kInputWav, &samples)) {
+        Check(false, "load WAV for LM test");
+        return;
+    }
+    if (samples.size() > static_cast<size_t>(16000 * 3)) {
+        samples.resize(16000 * 3);
+    }
+
+    AsrHandle handle = AudioEngine_Asr_Create();
+    AsrInitConfig config;
+    FillZipformerConfig(&config, "");
+    config.decoding_method = 1;
+    config.lm_shallow_fusion = 1;
+    config.lm_scale = 0.5f;
+    std::snprintf(config.lm_model_path, sizeof(config.lm_model_path), "%s",
+                  lm_path.c_str());
+    const int ret = AudioEngine_Asr_Init(handle, &config);
+    Check(ret == AUDIO_ENGINE_SUCCESS, "Init modified_beam_search + LM");
+    if (ret == AUDIO_ENGINE_SUCCESS) {
+        const RunResult result = RunAudio(handle, samples, false);
+        Check(!result.partials.empty() && !result.partials.back().empty(),
+              "beam search + LM produces text");
+    }
+    AudioEngine_Asr_Deinit(handle);
+    AudioEngine_Asr_Destroy(handle);
+}
+
+void TestPunctuationIfAvailable()
+{
+    std::cout << "=== test_punctuation ===" << std::endl;
+
+    const std::string punct_model =
+        FindFileWithKey("models/asr", {"punct"}, true);
+    const std::string punct_vocab =
+        FindFileWithKey("models/asr", {"vocab"}, false);
+    if (punct_model.empty() || punct_vocab.empty()) {
+        std::cout << "  SKIP: no punctuation model/vocab under models/asr"
+                  << std::endl;
+        return;
+    }
+
+    std::vector<int16_t> samples;
+    if (!LoadWav(kInputWav, &samples)) {
+        Check(false, "load WAV for punctuation test");
+        return;
+    }
+    if (samples.size() > static_cast<size_t>(16000 * 3)) {
+        samples.resize(16000 * 3);
+    }
+    std::vector<int16_t> silence(16000 * 3, 0);
+
+    AsrHandle handle = AudioEngine_Asr_Create();
+    AsrInitConfig config;
+    FillZipformerConfig(&config, "");
+    config.enable_punctuation = 1;
+    std::snprintf(config.punctuation_model_path,
+                  sizeof(config.punctuation_model_path), "%s",
+                  punct_model.c_str());
+    std::snprintf(config.punctuation_bpe_vocab_path,
+                  sizeof(config.punctuation_bpe_vocab_path), "%s",
+                  punct_vocab.c_str());
+    const int ret = AudioEngine_Asr_Init(handle, &config);
+    Check(ret == AUDIO_ENGINE_SUCCESS, "Init punctuation model");
+    if (ret == AUDIO_ENGINE_SUCCESS) {
+        RunAudio(handle, samples, false);
+        const RunResult tail = RunAudio(handle, silence, true);
+        std::cout << "  punctuated final text: " << tail.final_text
+                  << std::endl;
+        Check(!tail.final_text.empty(), "punctuated final text is non-empty");
+    }
+    AudioEngine_Asr_Deinit(handle);
+    AudioEngine_Asr_Destroy(handle);
 }
 
 void TestParaformerBackendIfAvailable()
@@ -480,7 +651,10 @@ int main(int argc, char** argv)
         TestZipformer();
         TestResetDeterminism();
         TestErrorCases();
+        TestLmIfAvailable();
+        TestPunctuationIfAvailable();
     }
+    TestHypotheses();
     TestParaformerBackendIfAvailable();
 
     std::cout << "All tests done." << std::endl;

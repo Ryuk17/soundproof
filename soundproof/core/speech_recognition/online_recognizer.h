@@ -13,10 +13,18 @@
 
 namespace soundproof {
 
+class OnlinePunctuator;
+
 struct AsrRecognizerConfig {
   AsrBackendConfig backend;
   std::string tokens_path;
   bool enable_endpoint = true;
+
+  bool enable_punctuation = false;
+  bool punctuate_partial = false;
+  std::string punctuation_model_path;
+  std::string punctuation_bpe_vocab_path;
+  int punctuation_num_threads = 1;
 };
 
 struct AsrRecognizerResult {
@@ -54,6 +62,7 @@ class OnlineRecognizer {
 
  private:
   std::unique_ptr<AsrBackend> backend_;
+  std::unique_ptr<OnlinePunctuator> punctuator_;
   FeatureExtractor features_;
   SymbolTable symbols_;
   Endpoint endpoint_;
@@ -62,6 +71,7 @@ class OnlineRecognizer {
   int32_t num_processed_frames_ = 0;
   int32_t segment_ = 0;
   bool enable_endpoint_ = true;
+  bool punctuate_partial_ = false;
   bool initialized_ = false;
 };
 
