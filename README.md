@@ -16,3 +16,4 @@ Soundproof 音频处理算法库，提供以下算法模块：
 | libAE_IE | 语音可懂度增强（Intelligibility Enhancer） |
 | libAE_TS | 瞬态噪声抑制（Transient Suppressor） |
 | libAE_DR | 去混响（Dereverberation） |
+| libAE_RAG | RAG 文本向量化（Text Embedding，基于 MNN-LLM Qwen3-Embedding） |

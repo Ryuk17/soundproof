@@ -68,6 +68,7 @@ option(BUILD_AE_KWS  "Build libAE_KWS and test_ae_kws (requires WITH_MNN)" ON)
 option(BUILD_AE_ASR  "Build libAE_ASR and test_ae_asr (requires WITH_MNN)" ON)
 option(BUILD_AE_SR   "Build libAE_SR and test_ae_sr (requires WITH_MNN)"   ON)
 option(BUILD_AE_TTS  "Build libAE_TTS and test_ae_tts (requires WITH_MNN)" ON)
+option(BUILD_AE_RAG "Build libAE_RAG and test_ae_rag (requires WITH_MNN_LLM)" ON)
 
 # Optional deep-learning runtime (MNN). OFF by default: heavy dependency
 # (static lib ~12 MB, several minutes to build) used by future DNN modules.
@@ -518,6 +519,37 @@ if(BUILD_AE_TTS)
         set_target_properties(AE_TTS PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
 
         add_ae_test(test_ae_tts "test_ae_tts.cc" AE_TTS)
+    endif()
+endif()
+
+# ============================================================================
+# libAE_RAG + test_ae_rag — RAG text embeddings via MNN-LLM
+# (Qwen3-Embedding). Requires WITH_MNN_LLM.
+# ============================================================================
+if(BUILD_AE_RAG)
+    if(NOT WITH_MNN_LLM)
+        message(STATUS "BUILD_AE_RAG=ON but WITH_MNN_LLM=OFF; skipping libAE_RAG")
+    else()
+        set(RAG_CORE_SRC
+            "${AE_CORE}/text_embedding/embedding_backend_factory.cc"
+            "${AE_CORE}/text_embedding/mnn_llm_embedding_backend.cc"
+            "${AE_CORE}/text_embedding/embedding_engine.cc"
+        )
+
+        add_library(AE_RAG STATIC
+            "${AE_ROOT}/interface/audio_engine_rag.cpp"
+            ${RAG_CORE_SRC}
+        )
+
+        target_include_directories(AE_RAG PUBLIC
+            ${LIB_COMMON_INCLUDES}
+            "${AE_CORE}/text_embedding"
+        )
+        target_link_libraries(AE_RAG PRIVATE soundproof_mnn)
+        target_compile_definitions(AE_RAG PRIVATE AUDIO_ENGINE_EXPORTS)
+        set_target_properties(AE_RAG PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${AE_PROJECT_ROOT}/lib")
+
+        add_ae_test(test_ae_rag "test_ae_rag.cc" AE_RAG)
     endif()
 endif()
 

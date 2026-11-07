@@ -25,6 +25,9 @@ if(WITH_MNN_LLM)
 	set(MNN_LOW_MEMORY ON CACHE BOOL "" FORCE)
 	set(MNN_CPU_WEIGHT_DEQUANT_GEMM ON CACHE BOOL "" FORCE)
 	set(MNN_SUPPORT_TRANSFORMER_FUSE ON CACHE BOOL "" FORCE)
+	# Skip LLM demos/tools; disable httplib-based remote model download.
+	set(MNN_LLM_BUILD_DEMO OFF CACHE BOOL "" FORCE)
+	set(LLM_SUPPORT_HTTP_RESOURCE OFF CACHE BOOL "" FORCE)
 endif()
 
 FetchContent_Declare(MNN
@@ -53,5 +56,12 @@ target_include_directories(soundproof_mnn INTERFACE
 	${mnn_SOURCE_DIR}/3rd_party/imageHelper
 	${mnn_SOURCE_DIR}/3rd_party/OpenCLHeaders
 )
+
+# MNN-LLM public headers (llm/llm.hpp) for the text-embedding module.
+if(WITH_MNN_LLM)
+	target_include_directories(soundproof_mnn INTERFACE
+		${mnn_SOURCE_DIR}/transformers/llm/engine/include
+	)
+endif()
 
 message(STATUS "MNN ${MNN_VERSION} ready (source: ${mnn_SOURCE_DIR})")
