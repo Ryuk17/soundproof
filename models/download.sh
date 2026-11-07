@@ -14,7 +14,7 @@ export HF_ENDPOINT=https://hf-mirror.com
 
 ./hfd.sh Jeryuk/kokoro-v1_0-MNN --local-dir tts/kokoro-v1_0-MNN
 
-./hfd.sh Jeryuk/smart-turn-v3.2-gpu-MNN --local-dir turn/smart-turn-v3.2-gpu-MNN
+./hfd.sh Jeryuk/smart-turn-v3.2-gpu-MNN --local-dir turn/smart-turn-v3.2-gpu.mnn
 
 ./hfd.sh Jeryuk/silero_vad-MNN --local-dir vad/Jeryuk/silero_vad-MNN
 

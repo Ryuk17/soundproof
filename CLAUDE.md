@@ -43,6 +43,7 @@ soundproof/
     ├── speaker_recognition/               SR（后端抽象、注册库、识别前端）
     ├── text_embedding/                    文本向量化引擎（RAG 后端抽象、归一化、缓存）
     ├── transient_suppressor/              TS
+    ├── turn_detection/                    TURN（Smart Turn v3.2、Whisper log-mel 前端）
     ├── voice_activity_detection/          VAD（WebRTC + Silero）
     └── tests/                             算法内部参考测试（未纳入当前 CMake）
 
@@ -86,7 +87,7 @@ int AudioEngine_Xxx_Reset(XxxHandle handle);
 - **除 handle 外只允许两个参数**：输入结构体 `const XxxInput_t*`、输出结构体 `XxxResult_t*`。禁止继续使用散参数。
 - 输入结构体字段：输入缓冲指针、样本数/帧长及算法特有输入；输出结构体字段：输出缓冲指针、容量、实际输出长度及结果标志。
 - 输入结构体字段名统一：`audio_in`、`in_samples`、`audio_out`、`max_out_samples`、`out_samples`；算法特有字段沿用现有命名（如 `nearend_in`、`trigger`）。
-- 现有算法：VAD、SRC（Resample）、NS、AGC、AGC2、AECM、AEC、BF、HS、IE、TS、DR、KWS、ASR、SR、RAG 均已按此约定。
+- 现有算法：VAD、SRC（Resample）、NS、AGC、AGC2、AECM、AEC、BF、HS、IE、TS、DR、KWS、ASR、SR、RAG、TURN 均已按此约定。
 
 ### 3.4 命名约定
 
