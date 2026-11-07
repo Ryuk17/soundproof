@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "core/turn_detection/whisper_mel.h"
+#include "feature/whisper_mel.h"
 #include "mnn_engine/mnn_engine.h"
 #include "utils/logging.h"
 

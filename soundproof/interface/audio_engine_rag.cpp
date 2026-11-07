@@ -13,7 +13,7 @@
 #include "audio_engine_log.h"
 #include "audio_engine_rag.h"
 
-#include "core/text_embedding/embedding_engine.h"
+#include "core/retrieval_augmented_generation/embedding_engine.h"
 
 
 namespace {

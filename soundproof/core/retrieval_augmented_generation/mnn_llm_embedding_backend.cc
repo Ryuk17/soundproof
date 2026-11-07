@@ -1,10 +1,9 @@
-#include "core/text_embedding/mnn_llm_embedding_backend.h"
+#include "core/retrieval_augmented_generation/mnn_llm_embedding_backend.h"
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
 
-#include "llm/llm.hpp"
+#include "mnn_engine/mnn_llm_engine.h"
 #include "utils/logging.h"
 
 namespace soundproof {
@@ -16,15 +15,10 @@ std::string ToLower(std::string s) {
   return s;
 }
 
-bool FileExists(const std::string& path) {
-  std::ifstream file(path);
-  return file.good();
-}
-
 }  // namespace
 
 struct MnnLlmEmbeddingBackend::Impl {
-  std::unique_ptr<MNN::Transformer::Embedding> embedding;
+  mnn_engine::LlmEngine engine;
 };
 
 MnnLlmEmbeddingBackend::MnnLlmEmbeddingBackend() : impl_(new Impl()) {}
@@ -32,16 +26,6 @@ MnnLlmEmbeddingBackend::~MnnLlmEmbeddingBackend() = default;
 
 EmbeddingStatus MnnLlmEmbeddingBackend::Init(
     const EmbeddingModelConfig& config) {
-  if (config.config_path.empty()) {
-    RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: config path is empty";
-    return EmbeddingStatus::kInvalidInput;
-  }
-  if (!FileExists(config.config_path)) {
-    RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: config file not found: "
-                      << config.config_path;
-    return EmbeddingStatus::kModelLoadFailed;
-  }
-
   std::string type = ToLower(config.model_type);
   if (!type.empty() && type != "mnn-llm" && type != "qwen3-embedding" &&
       type != "qwen3") {
@@ -51,40 +35,30 @@ EmbeddingStatus MnnLlmEmbeddingBackend::Init(
   }
   model_type_ = "mnn-llm";
 
-  std::unique_ptr<MNN::Transformer::Embedding> embedding(
-      MNN::Transformer::Embedding::createEmbedding(config.config_path, false));
-  if (!embedding) {
-    RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: cannot create embedding from "
-                      << config.config_path;
-    return EmbeddingStatus::kModelLoadFailed;
-  }
-
-  // thread_num is read when load() creates the runtime, so it must be applied
-  // before load(). 0 keeps the value from config.json (MNN default is 4).
-  if (config.num_threads > 0) {
-    const std::string overrides =
-        "{\"thread_num\":" + std::to_string(config.num_threads) + "}";
-    if (!embedding->set_config(overrides)) {
-      RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: cannot apply thread_num="
-                        << config.num_threads;
-      return EmbeddingStatus::kModelLoadFailed;
-    }
-  }
-
-  if (!embedding->load()) {
+  mnn_engine::LlmEngineConfig engine_config;
+  engine_config.config_path = config.config_path;
+  engine_config.task = mnn_engine::LlmTask::kEmbedding;
+  engine_config.num_threads = config.num_threads;
+  if (!impl_->engine.Init(engine_config)) {
     RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: failed to load "
                       << config.config_path;
     return EmbeddingStatus::kModelLoadFailed;
   }
 
+  MNN::Transformer::Embedding* embedding = impl_->engine.embedding();
+  if (embedding == nullptr) {
+    RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: no embedding model";
+    impl_->engine.Deinit();
+    return EmbeddingStatus::kUnsupportedModel;
+  }
   dim_ = embedding->dim();
   if (dim_ <= 0) {
     RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: invalid embedding dim "
                       << dim_;
+    impl_->engine.Deinit();
     return EmbeddingStatus::kUnsupportedModel;
   }
 
-  impl_->embedding = std::move(embedding);
   RTC_LOG(LS_INFO) << "MnnLlmEmbeddingBackend: loaded " << config.config_path
                    << ", dim=" << dim_;
   return EmbeddingStatus::kOk;
@@ -95,7 +69,7 @@ EmbeddingStatus MnnLlmEmbeddingBackend::Compute(
   if (embedding == nullptr) {
     return EmbeddingStatus::kInvalidInput;
   }
-  if (!impl_->embedding) {
+  if (!impl_->engine.initialized() || impl_->engine.embedding() == nullptr) {
     return EmbeddingStatus::kNotInitialized;
   }
   if (text.empty()) {
@@ -103,7 +77,7 @@ EmbeddingStatus MnnLlmEmbeddingBackend::Compute(
     return EmbeddingStatus::kInvalidInput;
   }
 
-  MNN::Express::VARP output = impl_->embedding->txt_embedding(text);
+  MNN::Express::VARP output = impl_->engine.embedding()->txt_embedding(text);
   if (output == nullptr) {
     RTC_LOG(LS_ERROR) << "MnnLlmEmbeddingBackend: txt_embedding failed";
     return EmbeddingStatus::kInferenceFailed;

@@ -30,6 +30,16 @@ if(WITH_MNN_LLM)
 	set(LLM_SUPPORT_HTTP_RESOURCE OFF CACHE BOOL "" FORCE)
 endif()
 
+# Vision (VLM) support for MNN-LLM: LLM_SUPPORT_VISION is defined by the LLM
+# engine CMake when MNN_BUILD_OPENCV is ON; MNN_IMGCODECS adds imread.
+if(WITH_MNN_VISION)
+	set(MNN_BUILD_OPENCV ON CACHE BOOL "" FORCE)
+	set(MNN_IMGCODECS ON CACHE BOOL "" FORCE)
+	set(MNN_CALIB3D OFF CACHE BOOL "" FORCE)
+	set(MNN_OPENCV_TEST OFF CACHE BOOL "" FORCE)
+	set(MNN_OPENCV_BENCH OFF CACHE BOOL "" FORCE)
+endif()
+
 FetchContent_Declare(MNN
 	URL ${MNN_URL}
 	URL_HASH ${MNN_URL_HASH}
@@ -57,10 +67,17 @@ target_include_directories(soundproof_mnn INTERFACE
 	${mnn_SOURCE_DIR}/3rd_party/OpenCLHeaders
 )
 
-# MNN-LLM public headers (llm/llm.hpp) for the text-embedding module.
+# MNN-LLM public headers (llm/llm.hpp) for the RAG / LLM modules.
 if(WITH_MNN_LLM)
 	target_include_directories(soundproof_mnn INTERFACE
 		${mnn_SOURCE_DIR}/transformers/llm/engine/include
+	)
+endif()
+
+# MNN CV headers (cv/imgcodecs.hpp) used by the VLM image front-end.
+if(WITH_MNN_VISION)
+	target_include_directories(soundproof_mnn INTERFACE
+		${mnn_SOURCE_DIR}/tools/cv/include
 	)
 endif()
 

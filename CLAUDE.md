@@ -22,10 +22,10 @@ soundproof/
 │   ├── audio_engine_def.h     统一错误码、AUDIO_ENGINE_API、路径长度
 │   ├── audio_engine_log.h     接口层日志宏（LOG_DEBUG/INFO/WARN/ERROR）
 │   └── audio_engine_<algo>.h/.cpp   每个算法的 C 接口与实现
-├── feature/            共享 fbank 特征提取（参数化，KWS/ASR/SR 共用）
+├── feature/            共享特征提取（fbank：KWS/ASR/SR；Whisper log-mel：TURN）
 ├── utils/              共享工具（symbol_table、WAV、logging、aligned_malloc 等）
 ├── model/              transducer 模型封装（encoder/decoder/joiner）
-├── mnn_engine/         通用 MNN 推理引擎（内部源码，不产出独立库）
+├── mnn_engine/         通用 MNN 推理引擎与 MNN-LLM 生命周期封装（内部源码，不产出独立库）
 ├── dsp/                WebRTC 风格 DSP 基础实现
 └── core/               算法实现
     ├── acoustic_echo_cancellation3/       AEC3
@@ -37,13 +37,14 @@ soundproof/
     ├── howling_suppressor/                HS
     ├── intelligibility_enhancer/          IE
     ├── keywords_spotting/                 KWS
+    ├── llm/                               LLM（Qwen3.5 VLM，后端抽象、历史、图像）
     ├── noise_suppressor/                  NS
     ├── sample_rate_conversion/            SRC
     ├── speech_recognition/                ASR（后端抽象、端点、识别前端）
     ├── speaker_recognition/               SR（后端抽象、注册库、识别前端）
-    ├── text_embedding/                    文本向量化引擎（RAG 后端抽象、归一化、缓存）
+    ├── retrieval_augmented_generation/     文本向量化引擎（RAG 后端抽象、归一化、缓存）
     ├── transient_suppressor/              TS
-    ├── turn_detection/                    TURN（Smart Turn v3.2、Whisper log-mel 前端）
+    ├── turn_detection/                    TURN（Smart Turn v3.2）
     ├── voice_activity_detection/          VAD（WebRTC + Silero）
     └── tests/                             算法内部参考测试（未纳入当前 CMake）
 
@@ -87,7 +88,7 @@ int AudioEngine_Xxx_Reset(XxxHandle handle);
 - **除 handle 外只允许两个参数**：输入结构体 `const XxxInput_t*`、输出结构体 `XxxResult_t*`。禁止继续使用散参数。
 - 输入结构体字段：输入缓冲指针、样本数/帧长及算法特有输入；输出结构体字段：输出缓冲指针、容量、实际输出长度及结果标志。
 - 输入结构体字段名统一：`audio_in`、`in_samples`、`audio_out`、`max_out_samples`、`out_samples`；算法特有字段沿用现有命名（如 `nearend_in`、`trigger`）。
-- 现有算法：VAD、SRC（Resample）、NS、AGC、AGC2、AECM、AEC、BF、HS、IE、TS、DR、KWS、ASR、SR、RAG、TURN 均已按此约定。
+- 现有算法：VAD、SRC（Resample）、NS、AGC、AGC2、AECM、AEC、BF、HS、IE、TS、DR、KWS、ASR、SR、RAG、TURN、LLM 均已按此约定。
 
 ### 3.4 命名约定
 
@@ -124,6 +125,7 @@ int AudioEngine_Xxx_Reset(XxxHandle handle);
 
 - `mnn_engine`、`feature`、`model`、`utils` 为共享源码，直接编译进消费方算法库，不产出独立库。
 - MNN 算法只在 `WITH_MNN=ON` 时构建；`WITH_MNN=OFF` 时 CMake 打印跳过，不影响其它算法。
+- MNN-LLM 相关源码（`mnn_engine/mnn_llm_engine.cc`）只编入 RAG / LLM；LLM（Qwen3.5 VLM）额外要求 `WITH_MNN_VISION=ON`。
 - 模型类型通过 metadata 自动识别；`model_type` 字段可显式覆盖。
 - 测试在模型/音频缺失时必须打印 `SKIP` 并返回成功，不能依赖未入库资产。
 
@@ -198,4 +200,4 @@ cmake --build build -j 1        # MinGW 内存有限时建议 -j1
 ctest --test-dir build --output-on-failure
 ```
 
-构建选项：`BUILD_AE_<ALGO>` 控制各算法库与测试；`WITH_MNN` 控制 MNN 运行时；`WITH_MNN_LLM` 启用 MNN LLM 支持（隐含 `WITH_MNN`）。模型资产通过 `models/download.sh` 获取，不入库。
+构建选项：`BUILD_AE_<ALGO>` 控制各算法库与测试；`WITH_MNN` 控制 MNN 运行时；`WITH_MNN_LLM` 启用 MNN LLM 支持（隐含 `WITH_MNN`）；`WITH_MNN_VISION` 启用视觉支持（隐含 `WITH_MNN_LLM`，LLM 模块必需）。模型资产通过 `models/download.sh` 获取，不入库。

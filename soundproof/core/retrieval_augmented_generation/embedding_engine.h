@@ -1,12 +1,12 @@
-#ifndef SOUNDPROOF_CORE_TEXT_EMBEDDING_EMBEDDING_ENGINE_H_
-#define SOUNDPROOF_CORE_TEXT_EMBEDDING_EMBEDDING_ENGINE_H_
+#ifndef SOUNDPROOF_CORE_RETRIEVAL_AUGMENTED_GENERATION_EMBEDDING_ENGINE_H_
+#define SOUNDPROOF_CORE_RETRIEVAL_AUGMENTED_GENERATION_EMBEDDING_ENGINE_H_
 
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "core/text_embedding/embedding_backend.h"
+#include "core/retrieval_augmented_generation/embedding_backend.h"
 
 namespace soundproof {
 
@@ -53,4 +53,4 @@ class EmbeddingEngine {
 
 }  // namespace soundproof
 
-#endif  // SOUNDPROOF_CORE_TEXT_EMBEDDING_EMBEDDING_ENGINE_H_
+#endif  // SOUNDPROOF_CORE_RETRIEVAL_AUGMENTED_GENERATION_EMBEDDING_ENGINE_H_

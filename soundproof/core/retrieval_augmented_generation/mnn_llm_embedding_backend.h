@@ -1,12 +1,12 @@
-#ifndef SOUNDPROOF_CORE_TEXT_EMBEDDING_MNN_LLM_EMBEDDING_BACKEND_H_
-#define SOUNDPROOF_CORE_TEXT_EMBEDDING_MNN_LLM_EMBEDDING_BACKEND_H_
+#ifndef SOUNDPROOF_CORE_RETRIEVAL_AUGMENTED_GENERATION_MNN_LLM_EMBEDDING_BACKEND_H_
+#define SOUNDPROOF_CORE_RETRIEVAL_AUGMENTED_GENERATION_MNN_LLM_EMBEDDING_BACKEND_H_
 
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "core/text_embedding/embedding_backend.h"
+#include "core/retrieval_augmented_generation/embedding_backend.h"
 
 namespace soundproof {
 
@@ -40,4 +40,4 @@ class MnnLlmEmbeddingBackend : public EmbeddingBackend {
 
 }  // namespace soundproof
 
-#endif  // SOUNDPROOF_CORE_TEXT_EMBEDDING_MNN_LLM_EMBEDDING_BACKEND_H_
+#endif  // SOUNDPROOF_CORE_RETRIEVAL_AUGMENTED_GENERATION_MNN_LLM_EMBEDDING_BACKEND_H_

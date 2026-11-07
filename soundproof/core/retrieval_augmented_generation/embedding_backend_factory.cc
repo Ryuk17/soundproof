@@ -1,11 +1,11 @@
-#include "core/text_embedding/embedding_backend.h"
+#include "core/retrieval_augmented_generation/embedding_backend.h"
 
 #include <algorithm>
 #include <cctype>
 #include <memory>
 #include <string>
 
-#include "core/text_embedding/mnn_llm_embedding_backend.h"
+#include "core/retrieval_augmented_generation/mnn_llm_embedding_backend.h"
 #include "utils/logging.h"
 
 namespace soundproof {
