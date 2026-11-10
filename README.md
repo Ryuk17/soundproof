@@ -2,6 +2,8 @@
 
 SoundProof is a full-duplex voice interaction stack that runs in real time on a streaming audio pipeline. Its audio front-end (AFE) handles echo cancellation, noise suppression, gain control, beamforming, VAD and dereverberation; the speech/LLM layer adds keyword spotting, ASR, speaker recognition, turn detection, TTS, RAG and chat/VLM. Everything is exposed as a pure C ABI, with each algorithm built as a static library named `libAE_<ALGO>` (CMake target `AE_<ALGO>`).
 
+![SoundProof architecture](assets/img/arch.jpeg)
+
 ## Algorithms
 
 | Library | Algorithm | Source |

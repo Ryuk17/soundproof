@@ -2,6 +2,8 @@
 
 SoundProof 是一套运行在实时流式音频管线上的全双工语音交互栈。音频前端（AFE）负责回声消除、噪声抑制、增益控制、波束成形、VAD 与去混响；语音/LLM 层提供关键词唤醒、ASR、说话人识别、轮次检测、TTS、RAG 与对话/VLM。所有能力以纯 C ABI 对外提供，每个算法编译为静态库 `libAE_<ALGO>`（CMake 目标 `AE_<ALGO>`）。
 
+![SoundProof 架构](assets/img/arch.jpeg)
+
 ## 算法模块
 
 | 模块 | 算法 | 源码 |
