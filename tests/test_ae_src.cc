@@ -260,8 +260,8 @@ static int CallProcess(ResampleHandle handle, const short* audio_in,
 
 int main(int argc, char** argv)
 {
-    const char* input_wav = "assets/audio_short16.wav";
-    const char* output_wav = "assets/audio_short16_resample_out.wav";
+    const char* input_wav = "assets/audio/audio_short16.wav";
+    const char* output_wav = "assets/audio/audio_short16_resample_out.wav";
 
     if (argc >= 2) input_wav = argv[1];
 

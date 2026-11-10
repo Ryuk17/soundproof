@@ -2,7 +2,7 @@
 //
 // The transducer test uses the bundled streaming zipformer model under
 // models/asr/sherpa-mnn-streaming-zipformer-bilingual-zh-en-2023-02-20 and
-// assets/audio_short16.wav. Tests are skipped when the assets are missing.
+// assets/audio/audio_short16.wav. Tests are skipped when the assets are missing.
 
 #include <algorithm>
 #include <cctype>
@@ -42,7 +42,7 @@ const char* kZipformerJoiner =
 const char* kZipformerTokens =
     "models/asr/sherpa-mnn-streaming-zipformer-bilingual-zh-en-2023-02-20/"
     "tokens.txt";
-const char* kInputWav = "assets/audio_short16.wav";
+const char* kInputWav = "assets/audio/audio_short16.wav";
 
 int g_failures = 0;
 

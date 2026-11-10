@@ -1,6 +1,6 @@
 // Tests for libAE_LLM — Qwen3.5 VLM chat via MNN-LLM.
 //
-// Uses models/llm/Qwen3.5-0.8B-MNN and assets/test_image_red.png. The model
+// Uses models/llm/Qwen3.5-0.8B-MNN and assets/img/test_image_red.png. The model
 // (~540 MB) is not tracked, so the test prints SKIP and succeeds when the
 // assets are missing.
 
@@ -17,7 +17,7 @@
 namespace {
 
 const char* kConfigPath = "models/llm/Qwen3.5-0.8B-MNN/config.json";
-const char* kImagePath = "assets/test_image_red.png";
+const char* kImagePath = "assets/img/test_image_red.png";
 
 int g_failures = 0;
 
@@ -50,7 +50,7 @@ bool AssetsAvailable()
         "models/llm/Qwen3.5-0.8B-MNN/visual.mnn",
         "models/llm/Qwen3.5-0.8B-MNN/visual.mnn.weight",
         "models/llm/Qwen3.5-0.8B-MNN/tokenizer.txt",
-        "assets/test_image_red.png",
+        "assets/img/test_image_red.png",
     };
     for (const char* file : files) {
         if (!FileExists(file)) {

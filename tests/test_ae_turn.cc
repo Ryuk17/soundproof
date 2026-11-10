@@ -19,9 +19,9 @@ namespace {
 
 const char* kModelPath =
     "models/turn/smart-turn-v3.2-gpu.mnn/smart-turn-v3.2-gpu.mnn";
-const char* kCompleteWav = "assets/audio_reverb16.wav";
-const char* kShortWav = "assets/audio_short16.wav";
-const char* kIncompleteWav = "assets/audio_tiny16.wav";
+const char* kCompleteWav = "assets/audio/audio_reverb16.wav";
+const char* kShortWav = "assets/audio/audio_short16.wav";
+const char* kIncompleteWav = "assets/audio/audio_tiny16.wav";
 
 constexpr int kSampleRate = 16000;
 constexpr int kFrameLen = 160;  // 10 ms

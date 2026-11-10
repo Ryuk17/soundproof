@@ -324,9 +324,9 @@ static int CallProcess(AecHandle handle, const short* nearend_in,
 
 int main(int argc, char** argv)
 {
-    const char* nearend_wav = "assets/audio_nearend16k.wav";
-    const char* farend_wav  = "assets/audio_farend16k.wav";
-    const char* output_wav  = "assets/audio_nearend16k_aec3_out.wav";
+    const char* nearend_wav = "assets/audio/audio_nearend16k.wav";
+    const char* farend_wav  = "assets/audio/audio_farend16k.wav";
+    const char* output_wav  = "assets/audio/audio_nearend16k_aec3_out.wav";
 
     if (argc >= 2) nearend_wav = argv[1];
     if (argc >= 3) farend_wav = argv[2];

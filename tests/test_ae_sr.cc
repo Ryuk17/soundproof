@@ -23,8 +23,8 @@ namespace {
 const char* kModelPath =
     "models/speaker_recognition/"
     "3dspeaker_speech_eres2netv2_sv_zh-cn_16k-common.mnn";
-const char* kWavA = "assets/audio_nearend16k.wav";
-const char* kWavB = "assets/audio_farend16k.wav";
+const char* kWavA = "assets/audio/audio_nearend16k.wav";
+const char* kWavB = "assets/audio/audio_farend16k.wav";
 
 int g_failures = 0;
 
